@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sensai": {
+      "type": "http",
+      "url": "https://black-vector.com/sensai/mcp"
+    }
+  }
+}
