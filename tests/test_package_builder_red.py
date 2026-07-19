@@ -193,6 +193,33 @@ def _inject_unresolved_parent_reference(source_root: Path, _: Path) -> None:
     _write_json(manifest_path, value)
 
 
+def _inject_one_segment_posix_path(source_root: Path, _: Path) -> None:
+    mcp_path = source_root / "shared" / ".mcp.json"
+    value = _load_json(mcp_path)
+    value["mcpServers"]["sensai"]["url"] = "/tmp"
+    _write_json(mcp_path, value)
+
+
+def _inject_windows_unc_path(source_root: Path, _: Path) -> None:
+    mcp_path = source_root / "shared" / ".mcp.json"
+    value = _load_json(mcp_path)
+    value["mcpServers"]["sensai"]["url"] = r"\\server\share\secrets"
+    _write_json(mcp_path, value)
+
+
+def _inject_general_private_server_path(source_root: Path, _: Path) -> None:
+    skill_path = source_root / "shared" / "skills" / "sensai" / "SKILL.md"
+    with skill_path.open("a", encoding="utf-8") as handle:
+        handle.write("\nLoad server/src/sensai/runtime.py.\n")
+
+
+def _inject_github_token(source_root: Path, _: Path) -> None:
+    mcp_path = source_root / "shared" / ".mcp.json"
+    value = _load_json(mcp_path)
+    value["mcpServers"]["sensai"]["headers"] = {"X-Token": "ghp_" + "a" * 36}
+    _write_json(mcp_path, value)
+
+
 UNSAFE_CONTENT_CASES: tuple[SourceMutation, ...] = (
     _inject_windows_absolute_path,
     _inject_posix_absolute_path,
@@ -200,6 +227,13 @@ UNSAFE_CONTENT_CASES: tuple[SourceMutation, ...] = (
     _inject_private_server_import,
     _inject_private_server_path_reference,
     _inject_unresolved_parent_reference,
+)
+
+REVIEWER_UNSAFE_CONTENT_CASES: tuple[SourceMutation, ...] = (
+    _inject_one_segment_posix_path,
+    _inject_windows_unc_path,
+    _inject_general_private_server_path,
+    _inject_github_token,
 )
 
 
@@ -340,6 +374,35 @@ def test_plugin_package_001_r04_rejects_unsafe_allowlisted_content(
 
 @pytest.mark.parametrize(
     "mutate",
+    REVIEWER_UNSAFE_CONTENT_CASES,
+    ids=("one-segment-posix", "windows-unc", "general-server-path", "github-token"),
+)
+def test_plugin_package_001_review_rejects_additional_unsafe_content(
+    mutate: SourceMutation, source_copy: Path, tmp_path: Path
+) -> None:
+    mutate(source_copy, tmp_path / "outside")
+
+    with pytest.raises(UnsafeSourceError):
+        build_packages(source_root=source_copy, output_root=tmp_path / "output")
+
+    assert not (tmp_path / "output").exists()
+
+
+def test_plugin_package_001_review_allows_non_secret_github_prose(
+    source_copy: Path, tmp_path: Path
+) -> None:
+    skill_path = source_copy / "shared" / "skills" / "sensai" / "SKILL.md"
+    with skill_path.open("a", encoding="utf-8") as handle:
+        handle.write("\nGitHub personal access tokens commonly use the ghp_ prefix.\n")
+
+    built = build_packages(source_root=source_copy, output_root=tmp_path / "output")
+
+    assert built.codex.is_dir()
+    assert built.claude.is_dir()
+
+
+@pytest.mark.parametrize(
+    "mutate",
     UNSAFE_NAME_CASES,
     ids=("environment-file", "secret-like-name", "test-file", "build-file"),
 )
@@ -363,3 +426,36 @@ def test_plugin_package_001_r05_each_payload_is_a_self_contained_root(
     shutil.copytree(getattr(built, platform), isolated_root)
 
     _assert_independent_root(isolated_root, platform)
+
+
+def test_plugin_package_001_review_restores_previous_output_when_cleanup_fails(
+    monkeypatch: pytest.MonkeyPatch, source_copy: Path, tmp_path: Path
+) -> None:
+    output_root = tmp_path / "output"
+    build_packages(source_root=source_copy, output_root=output_root)
+    previous_files = _regular_files(output_root)
+    skill_path = source_copy / "shared" / "skills" / "sensai" / "SKILL.md"
+    with skill_path.open("a", encoding="utf-8") as handle:
+        handle.write("\nReplacement that must not be published.\n")
+
+    real_rmtree = shutil.rmtree
+    cleanup_failures = 0
+
+    def fail_previous_cleanup(path: str | Path, *args: Any, **kwargs: Any) -> None:
+        nonlocal cleanup_failures
+        candidate = Path(path)
+        if candidate.name.startswith(".output-previous-") and cleanup_failures == 0:
+            cleanup_failures += 1
+            raise OSError("injected previous-output cleanup failure")
+        real_rmtree(path, *args, **kwargs)
+
+    monkeypatch.setattr(
+        "sensai_plugin.package_builder._remove_tree", fail_previous_cleanup
+    )
+
+    with pytest.raises(OSError, match="injected previous-output cleanup failure"):
+        build_packages(source_root=source_copy, output_root=output_root)
+
+    assert cleanup_failures == 1
+    assert _regular_files(output_root) == previous_files
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["output", "payload-src"]
