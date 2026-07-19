@@ -6,6 +6,7 @@ import shutil
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -426,6 +427,44 @@ def test_plugin_package_001_r05_each_payload_is_a_self_contained_root(
     shutil.copytree(getattr(built, platform), isolated_root)
 
     _assert_independent_root(isolated_root, platform)
+
+
+def test_mcp_min_r05_packages_exact_public_http_manifest(
+    source_copy: Path, tmp_path: Path
+) -> None:
+    source_manifest_path = source_copy / "shared" / ".mcp.json"
+    source_manifest_bytes = source_manifest_path.read_bytes()
+    expected_manifest = {
+        "mcpServers": {
+            "sensai": {
+                "type": "http",
+                "url": "https://black-vector.com/sensai/mcp",
+            }
+        }
+    }
+
+    source_manifest = _load_json(source_manifest_path)
+    assert source_manifest == expected_manifest
+    assert set(source_manifest["mcpServers"]) == {"sensai"}
+    assert set(source_manifest["mcpServers"]["sensai"]) == {"type", "url"}
+
+    endpoint = urlsplit(source_manifest["mcpServers"]["sensai"]["url"])
+    assert endpoint.scheme == "https"
+    assert endpoint.hostname == "black-vector.com"
+    assert endpoint.username is None
+    assert endpoint.password is None
+    assert endpoint.query == ""
+    assert endpoint.fragment == ""
+
+    built = build_packages(source_root=source_copy, output_root=tmp_path / "output")
+    codex_manifest_bytes = (built.codex / ".mcp.json").read_bytes()
+    claude_manifest_bytes = (built.claude / ".mcp.json").read_bytes()
+
+    assert codex_manifest_bytes == source_manifest_bytes
+    assert claude_manifest_bytes == source_manifest_bytes
+    assert codex_manifest_bytes == claude_manifest_bytes
+    assert json.loads(codex_manifest_bytes) == expected_manifest
+    assert json.loads(claude_manifest_bytes) == expected_manifest
 
 
 def test_plugin_package_001_review_restores_previous_output_when_cleanup_fails(
