@@ -429,9 +429,7 @@ def test_plugin_package_001_r05_each_payload_is_a_self_contained_root(
     _assert_independent_root(isolated_root, platform)
 
 
-def test_mcp_min_r05_packages_exact_public_http_manifest(
-    source_copy: Path, tmp_path: Path
-) -> None:
+def test_mcp_min_r05_packages_exact_public_http_manifest(source_copy: Path, tmp_path: Path) -> None:
     source_manifest_path = source_copy / "shared" / ".mcp.json"
     source_manifest_bytes = source_manifest_path.read_bytes()
     expected_manifest = {
@@ -488,9 +486,7 @@ def test_plugin_package_001_review_restores_previous_output_when_cleanup_fails(
             raise OSError("injected previous-output cleanup failure")
         real_rmtree(path, *args, **kwargs)
 
-    monkeypatch.setattr(
-        "sensai_plugin.package_builder._remove_tree", fail_previous_cleanup
-    )
+    monkeypatch.setattr("sensai_plugin.package_builder._remove_tree", fail_previous_cleanup)
 
     with pytest.raises(OSError, match="injected previous-output cleanup failure"):
         build_packages(source_root=source_copy, output_root=output_root)
