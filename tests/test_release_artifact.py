@@ -12,6 +12,7 @@ from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 MCP_URL = "http://127.0.0.1:8765/mcp"
+ATTESTATION_PATH = "plugins/sensai/sensai-mcp-attestation.json"
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 
 
@@ -147,6 +148,17 @@ def test_pre2e_r01_builds_and_independently_verifies_versioned_release(
         assert archive["mcp_url"] == MCP_URL
         assert archive["files"]
         assert platform in archive_path.name
+        archive_files = _archive_files(archive_path)
+        attestation = json.loads(archive_files[ATTESTATION_PATH])
+        assert attestation == {
+            "format_version": "1",
+            "mcp_contract_version": metadata["mcp_contract_version"],
+            "mcp_schema_sha256": metadata["mcp_schema_sha256"],
+            "mcp_url": MCP_URL,
+        }
+        assert ATTESTATION_PATH.removeprefix("plugins/sensai/") in archive_files[
+            "plugins/sensai/MANIFEST.sha256"
+        ].decode("utf-8")
 
     verified = _verify(first)
     assert verified.returncode == 0, verified.stderr
@@ -172,6 +184,49 @@ def test_pre2e_r01_verifier_rejects_archive_byte_tampering(tmp_path: Path) -> No
 
     assert verified.returncode == 1
     assert "Archive SHA-256 mismatch: codex" in verified.stderr
+
+
+def test_pre2e_r01_verifier_rejects_rehashed_archive_mcp_url_mutation(
+    tmp_path: Path,
+) -> None:
+    bundle = tmp_path / "bundle"
+    _build(bundle)
+    metadata = _json(bundle / "release.json")
+    platform = "codex"
+    archive = bundle / metadata["platforms"][platform]["archive"]
+    files = _archive_files(archive)
+    mcp_path = "plugins/sensai/.mcp.json"
+    mcp = json.loads(files[mcp_path])
+    mcp["mcpServers"]["sensai"]["url"] = "http://127.0.0.1:9999/wrong"
+    files[mcp_path] = (json.dumps(mcp, indent=2, sort_keys=True) + "\n").encode()
+    files["plugins/sensai/MANIFEST.sha256"] = _plugin_manifest(files, platform)
+    _rewrite_platform_archive(bundle, metadata, platform, files)
+
+    verified = _verify(bundle)
+
+    assert verified.returncode == 1
+    assert "trusted plugin source" in verified.stderr
+
+
+def test_pre2e_r04_verifier_rejects_rehashed_archive_attestation_mutation(
+    tmp_path: Path,
+) -> None:
+    bundle = tmp_path / "bundle"
+    _build(bundle)
+    metadata = _json(bundle / "release.json")
+    platform = "claude"
+    archive = bundle / metadata["platforms"][platform]["archive"]
+    files = _archive_files(archive)
+    attestation = json.loads(files[ATTESTATION_PATH])
+    attestation["mcp_schema_sha256"] = "0" * 64
+    files[ATTESTATION_PATH] = (json.dumps(attestation, indent=2, sort_keys=True) + "\n").encode()
+    files["plugins/sensai/MANIFEST.sha256"] = _plugin_manifest(files, platform)
+    _rewrite_platform_archive(bundle, metadata, platform, files)
+
+    verified = _verify(bundle)
+
+    assert verified.returncode == 1
+    assert "trusted plugin source" in verified.stderr
 
 
 def test_pre2e_r01_verifier_rejects_archive_path_traversal(tmp_path: Path) -> None:
