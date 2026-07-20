@@ -13,3 +13,14 @@ Run the offline Codex package lifecycle acceptance with:
 The command requires `codex` on `PATH`; it redirects `CODEX_HOME`, `HOME`, `TMPDIR`, and XDG roots
 to a temporary profile and does not read credentials or contact the MCP server. It checks that the
 real config and exact lifecycle-test cache sentinel remain unchanged.
+
+Run the isolated Claude Code package lifecycle acceptance with:
+
+```sh
+./scripts/test_claude_lifecycle.py
+```
+
+The command requires exactly Claude Code 2.1.193 on `PATH`. It uses temporary Claude, secure-storage, home,
+plugin-cache, temp, and XDG roots; validates install, MCP discovery, native update, uninstall, and
+marketplace removal; and fails if any allowlisted Claude state sentinel changes. MCP discovery may
+perform an endpoint health check, but endpoint connectivity is not part of this lifecycle acceptance.
