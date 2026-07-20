@@ -1,0 +1,40 @@
+{
+  "inputSchemas": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversation Id"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "request_id"
+      ],
+      "title": "tell_sensaiArguments",
+      "type": "object"
+    }
+  ],
+  "prompts": [],
+  "resources": [],
+  "tools": [
+    "tell_sensai"
+  ]
+}
