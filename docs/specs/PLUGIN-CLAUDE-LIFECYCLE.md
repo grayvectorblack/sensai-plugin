@@ -1,64 +1,53 @@
-# PLUGIN-CLAUDE-LIFECYCLE: Isolated Claude Code Installation
+# PLUGIN-CLAUDE-LOCAL-INSTALL: Isolated Claude Code Installation
 
 ## Purpose
 
-Prove the public Claude payload can be validated, installed from a local marketplace, updated to
-a second version, discovered as an MCP-providing plugin, uninstalled, and removed using the real
-Claude Code CLI without changing the user's Claude profile.
+Prove that one exact release bundle built by the current release builder can be independently
+verified, installed through Claude Code's local marketplace flow, and discovered as an
+MCP-providing plugin without changing the user's real Claude profile.
 
 ## Acceptance
 
-`scripts/test_claude_lifecycle.py` exercises commands supported by the locally installed Claude
-Code 2.1.193. The script requires that exact version before parsing any lifecycle output:
+`scripts/test_claude_lifecycle.py --bundle <release-directory>` uses the locally installed Claude
+Code 2.1.193 and performs one bounded lifecycle:
 
-1. Build two deterministic Claude payloads and verify each `MANIFEST.sha256`.
-2. Run `claude plugin validate --strict` against the plugin and marketplace.
-3. Add the local marketplace at user scope and prove its isolated path through
-   `claude plugin marketplace list --json`.
-4. Install version `0.1.0` and prove through `claude plugin list --json` that it is enabled at user
-   scope, resides in the isolated plugin cache, and exposes the expected HTTP MCP configuration.
-5. Run `claude mcp get plugin:sensai:sensai` and require Claude's namespaced dynamic MCP entry,
-   transport, and URL.
-6. Replace the local marketplace payload, run the native marketplace and plugin update commands,
-   and repeat the structured plugin and MCP assertions for version `0.1.1`.
-7. Uninstall the plugin and prove both the installed-plugin list and MCP discovery no longer contain
-   Sensai. Any `.orphaned_at` cache markers are reported as an observation, not required as a
-   supported uninstall behavior or misreported as immediate cache deletion.
-8. Remove the marketplace, exit the temporary-directory boundary, and prove the entire isolated
-   profile was deleted.
+1. Copy the regular bundle files once into a private read-only snapshot, then invoke
+   `scripts/verify_release.py` against that snapshot in a separate process. Reject any snapshot
+   change before metadata parsing, during extraction, or after verification.
+2. Extract the exact attested Claude marketplace archive once, rejecting unsafe or duplicate
+   paths, size limit violations, non-regular entries, and any mismatch with release metadata.
+3. Verify every plugin byte against `MANIFEST.sha256`, including the exact MCP attestation, then
+   make every extracted file and directory read-only under a writable temporary parent.
+4. Create a completely isolated temporary Claude profile, home, plugin cache, secure storage,
+   temporary directory, and XDG roots.
+5. Run the official commands `claude plugin marketplace add`,
+   `claude plugin install sensai@sensai-local --scope user`, `claude plugin list --json`, and
+   `claude mcp get plugin:sensai:sensai`.
+6. Require the exact selector, release version, user scope, isolated install path, MCP namespace,
+   transport, and release MCP URL. Require the extracted marketplace fingerprint to remain exact.
+7. Delete the temporary profile and prove the real profile is unchanged. The sentinels cover the
+   config root entries and top-level config files, complete plugin cache and backup trees, resolved
+   targets, optional secure storage, Claude-specific XDG locations, repository-local `.claude`,
+   and home-level `.claude.json`. Unrelated history, projects, and sessions are not traversed.
 
-## Isolation Boundary
-
-Every lifecycle command receives temporary `CLAUDE_CONFIG_DIR`,
-`CLAUDE_SECURESTORAGE_CONFIG_DIR`, `CLAUDE_CODE_PLUGIN_CACHE_DIR`, `HOME`, `TMP`, `TEMP`,
-`TMPDIR`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, and `XDG_DATA_HOME` values. The updater is disabled.
-Claude credential environment variables and plugin seed injection are removed from the command
-environment, and commands run from the temporary work directory. Subprocesses receive a minimal
-allowlist containing only `PATH`, locale, timezone, and optional TLS certificate locations before
-the isolated roots are added; arbitrary parent variables are never inherited.
-
-Each Claude command starts in a new process session. A timeout terminates the complete process
-group, waits two seconds, and then kills the complete group if necessary, preserving captured
-stdout and stderr in the failure evidence.
-
-Before and after the lifecycle, the acceptance fingerprints an explicit allowlist of
-mutation-sensitive paths observed for these commands: the `~/.claude` symlink and its target string,
-resolved `settings.json`, resolved config-local `.claude.json`, the complete resolved `backups` and
-`plugins` trees, home-level `.claude.json`, known Claude XDG cache/config/data roots, and the
-repository's `.claude` directory. It prints every logical and resolved sentinel and fails if any
-allowlisted content changes. It does not fingerprint the resolved configuration directory as a
-whole or claim to monitor arbitrary files elsewhere in that tree.
+The lifecycle never rebuilds a release, installs an archive directly, modifies extracted release
+files, or uses the user's Claude profile. A tampered bundle fails before the extraction directory
+is created.
 
 ## Claim Boundary
 
-The acceptance proves CLI validation, lifecycle state, and MCP configuration discovery. The
-`mcp get` command may attempt an endpoint health check and may report either a connected or failed
-status; connectivity, authentication, tool invocation, and model behavior are deliberately not
-claimed here. Cache payloads can remain orphan-marked after the supported uninstall command, but
-they are removed when the isolated profile is deleted.
+This proves local marketplace installation and MCP configuration discovery. `claude mcp get` may
+report endpoint health, but this acceptance does not claim authentication, model behavior, or a
+successful MCP tool call.
 
-Run from the plugin repository:
+Run from the plugin repository after building a bundle once:
 
 ```sh
-./scripts/test_claude_lifecycle.py
+uv run python scripts/test_claude_lifecycle.py --bundle /path/to/release
+```
+
+The durable automated real-CLI acceptance is:
+
+```sh
+uv run pytest -s -q tests/test_claude_release_lifecycle.py -k real_claude_cli
 ```

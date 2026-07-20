@@ -17,6 +17,10 @@ dev = [
 addopts = "--strict-config --strict-markers"
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+  "claude_real_cli: expensive lifecycle acceptance against the installed official Claude CLI",
+  "codex_real_cli: expensive lifecycle acceptance against the installed official Codex CLI",
+]
 
 [tool.ruff]
 line-length = 100
