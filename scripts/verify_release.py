@@ -20,9 +20,14 @@ from sensai_plugin.release_verifier import (  # noqa: E402
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bundle", required=True, type=Path)
+    parser.add_argument("--live-mcp-url")
     arguments = parser.parse_args()
     try:
-        result = verify_release(repository_root=REPOSITORY_ROOT, bundle=arguments.bundle)
+        result = verify_release(
+            repository_root=REPOSITORY_ROOT,
+            bundle=arguments.bundle,
+            live_mcp_url=arguments.live_mcp_url,
+        )
     except ReleaseVerificationError as error:
         parser.exit(1, f"release verification failed: {error}\n")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))

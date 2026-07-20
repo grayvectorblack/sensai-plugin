@@ -10,6 +10,7 @@ import shutil
 import stat
 import tempfile
 import zipfile
+from collections.abc import Awaitable, Callable
 from itertools import islice
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -26,7 +27,13 @@ _MAX_ARCHIVE_MEMBERS = 128
 _MAX_MEMBER_BYTES = 2 * 1024 * 1024
 _MAX_EXTRACTED_BYTES = 8 * 1024 * 1024
 _READ_CHUNK_BYTES = 64 * 1024
+_LIVE_REQUEST_TIMEOUT_SECONDS = 5.0
+_LIVE_OVERALL_TIMEOUT_SECONDS = 15.0
+_MAX_LIVE_PAGES = 32
+_MAX_LIVE_ITEMS = 256
 _MARKETPLACE_NAME = "sensai-local"
+_MCP_CONTRACT_VERSION = "1"
+_ATTESTATION_NAME = "sensai-mcp-attestation.json"
 _TRUSTED_SOURCE_FILES = frozenset(
     {
         "shared/.mcp.json",
@@ -102,6 +109,125 @@ def _canonical_json(value: Any) -> bytes:
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
+
+
+def _canonical_items(values: list[Any], label: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for value in values:
+        try:
+            item = value.model_dump(mode="json", by_alias=True, exclude_none=True)
+        except (AttributeError, TypeError, ValueError) as error:
+            raise ReleaseVerificationError(f"Live MCP returned an invalid {label}") from error
+        if not isinstance(item, dict):
+            raise ReleaseVerificationError(f"Live MCP returned an invalid {label}")
+        items.append(item)
+    return sorted(items, key=_canonical_json)
+
+
+def _canonical_contract_surface(value: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    if set(value) != {"tools", "resources", "prompts"}:
+        raise ReleaseVerificationError(
+            "Trusted MCP contract must contain tools, resources, and prompts"
+        )
+    surface: dict[str, list[dict[str, Any]]] = {}
+    for field in ("prompts", "resources", "tools"):
+        items = value[field]
+        if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+            raise ReleaseVerificationError(
+                f"Trusted MCP contract field must be an array of objects: {field}"
+            )
+        surface[field] = sorted(items, key=_canonical_json)
+    return surface
+
+
+def _attestation_bytes(*, schema_hash: str, mcp_url: str) -> bytes:
+    return _document_json(
+        {
+            "format_version": "1",
+            "mcp_contract_version": _MCP_CONTRACT_VERSION,
+            "mcp_schema_sha256": schema_hash,
+            "mcp_url": mcp_url,
+        }
+    )
+
+
+async def _collect_live_pages(
+    operation: Callable[[str | None], Awaitable[Any]],
+    field: str,
+) -> list[Any]:
+    items: list[Any] = []
+    cursor: str | None = None
+    seen_cursors: set[str] = set()
+    for _page in range(_MAX_LIVE_PAGES):
+        result = await operation(cursor)
+        page_items = getattr(result, field, None)
+        if not isinstance(page_items, list):
+            raise ReleaseVerificationError(f"Live MCP returned an invalid {field} page")
+        items.extend(page_items)
+        if len(items) > _MAX_LIVE_ITEMS:
+            raise ReleaseVerificationError("Live MCP surface exceeds item limit")
+        cursor = result.nextCursor
+        if cursor is None:
+            return items
+        if cursor in seen_cursors:
+            raise ReleaseVerificationError("Live MCP pagination cursor repeated")
+        seen_cursors.add(cursor)
+    raise ReleaseVerificationError("Live MCP surface exceeds page limit")
+
+
+async def _live_mcp_surface(live_mcp_url: str) -> dict[str, list[dict[str, Any]]]:
+    from datetime import timedelta
+
+    import httpx
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamable_http_client
+
+    async with (
+        httpx.AsyncClient(
+            timeout=_LIVE_REQUEST_TIMEOUT_SECONDS,
+            trust_env=False,
+            follow_redirects=False,
+        ) as http_client,
+        streamable_http_client(
+            live_mcp_url,
+            http_client=http_client,
+            terminate_on_close=False,
+        ) as (read_stream, write_stream, _),
+        ClientSession(
+            read_stream,
+            write_stream,
+            read_timeout_seconds=timedelta(seconds=_LIVE_REQUEST_TIMEOUT_SECONDS),
+        ) as session,
+    ):
+        await session.initialize()
+        tools = await _collect_live_pages(session.list_tools, "tools")
+        resources = await _collect_live_pages(session.list_resources, "resources")
+        prompts = await _collect_live_pages(session.list_prompts, "prompts")
+    return {
+        "prompts": _canonical_items(prompts, "prompt"),
+        "resources": _canonical_items(resources, "resource"),
+        "tools": _canonical_items(tools, "tool"),
+    }
+
+
+async def _bounded_live_mcp_surface(
+    live_mcp_url: str,
+) -> dict[str, list[dict[str, Any]]]:
+    import anyio
+
+    with anyio.fail_after(_LIVE_OVERALL_TIMEOUT_SECONDS):
+        return await _live_mcp_surface(live_mcp_url)
+
+
+def _read_live_mcp_surface(live_mcp_url: str) -> dict[str, list[dict[str, Any]]]:
+    import anyio
+
+    try:
+        return anyio.run(_bounded_live_mcp_surface, live_mcp_url)
+    except ReleaseVerificationError:
+        raise
+    except Exception as error:
+        raise ReleaseVerificationError("Could not verify the live MCP surface") from error
 
 
 def _digest(path: Path, maximum: int, label: str) -> str:
@@ -289,6 +415,7 @@ def _expected_marketplace_bytes(
     *,
     platform: str,
     mcp_url: str,
+    schema_hash: str,
 ) -> dict[str, bytes]:
     mcp = _json_bytes_object(source["shared/.mcp.json"], "shared/.mcp.json")
     servers = mcp.get("mcpServers")
@@ -302,6 +429,7 @@ def _expected_marketplace_bytes(
     payload: dict[str, bytes] = {
         f".{platform}-plugin/plugin.json": source[plugin_manifest_relative],
         ".mcp.json": _document_json(mcp),
+        _ATTESTATION_NAME: _attestation_bytes(schema_hash=schema_hash, mcp_url=mcp_url),
         "skills/sensai/SKILL.md": source["shared/skills/sensai/SKILL.md"],
     }
     payload["MANIFEST.sha256"] = "".join(
@@ -357,6 +485,7 @@ def _verify_marketplace(
     platform: str,
     version: str,
     mcp_url: str,
+    schema_hash: str,
 ) -> None:
     plugin_root = root / "plugins" / "sensai"
     plugin_manifest = _object(plugin_root / f".{platform}-plugin" / "plugin.json")
@@ -369,6 +498,11 @@ def _verify_marketplace(
     sensai = servers["sensai"]
     if not isinstance(sensai, dict) or sensai.get("url") != mcp_url:
         raise ReleaseVerificationError(f"Unexpected {platform} MCP URL")
+    if (plugin_root / _ATTESTATION_NAME).read_bytes() != _attestation_bytes(
+        schema_hash=schema_hash,
+        mcp_url=mcp_url,
+    ):
+        raise ReleaseVerificationError(f"Unexpected {platform} MCP contract attestation")
 
     if platform == "codex":
         marketplace = _object(root / ".agents" / "plugins" / "marketplace.json")
@@ -386,7 +520,12 @@ def _verify_marketplace(
         raise ReleaseVerificationError(f"Unexpected {platform} marketplace source")
 
 
-def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
+def verify_release(
+    *,
+    repository_root: Path,
+    bundle: Path,
+    live_mcp_url: str | None = None,
+) -> dict[str, Any]:
     """Verify one bundle without importing or calling release builder code."""
     if bundle.is_symlink() or not bundle.is_dir():
         raise ReleaseVerificationError("Release bundle must be a regular directory")
@@ -406,12 +545,23 @@ def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
     _validate_mcp_url(mcp_url)
     contract_version = _string(metadata.get("mcp_contract_version"), "mcp_contract_version")
     schema_hash = _sha256(metadata.get("mcp_schema_sha256"), "mcp_schema_sha256")
-    contract = _object(repository_root / "contracts" / "mcp-surface-v1.json")
-    if hashlib.sha256(_canonical_json(contract)).hexdigest() != schema_hash:
+    contract = _canonical_contract_surface(
+        _object(repository_root / "contracts" / "mcp-surface-v1.json")
+    )
+    trusted_schema_hash = hashlib.sha256(_canonical_json(contract)).hexdigest()
+    if trusted_schema_hash != schema_hash:
         raise ReleaseVerificationError("MCP schema hash does not match the canonical contract")
-    if contract_version != "1":
+    if contract_version != _MCP_CONTRACT_VERSION:
         raise ReleaseVerificationError("Unsupported MCP contract version")
     trusted_source = _trusted_source_bytes(repository_root)
+    expected_mcp_url = mcp_url
+    if live_mcp_url is not None:
+        _validate_mcp_url(live_mcp_url)
+        if live_mcp_url != mcp_url:
+            raise ReleaseVerificationError(
+                "Explicit live MCP URL does not match the verified release URL"
+            )
+        expected_mcp_url = live_mcp_url
 
     platforms = metadata.get("platforms")
     if not isinstance(platforms, dict) or set(platforms) != set(_PLATFORMS):
@@ -448,7 +598,8 @@ def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
             trusted = _expected_marketplace_bytes(
                 trusted_source,
                 platform=platform,
-                mcp_url=mcp_url,
+                mcp_url=expected_mcp_url,
+                schema_hash=trusted_schema_hash,
             )
             if actual_bytes != trusted:
                 raise ReleaseVerificationError(
@@ -458,7 +609,8 @@ def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
                 extraction,
                 platform=platform,
                 version=version,
-                mcp_url=mcp_url,
+                mcp_url=expected_mcp_url,
+                schema_hash=trusted_schema_hash,
             )
         finally:
             shutil.rmtree(extraction)
@@ -466,7 +618,7 @@ def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
     actual_bundle_files = {path.name for path in entries}
     if actual_bundle_files != expected_bundle_files:
         raise ReleaseVerificationError("Bundle contains unexpected entries")
-    return {
+    result = {
         "mcp_contract_version": contract_version,
         "mcp_schema_sha256": schema_hash,
         "mcp_url": mcp_url,
@@ -474,3 +626,14 @@ def verify_release(*, repository_root: Path, bundle: Path) -> dict[str, Any]:
         "release_version": version,
         "verified": True,
     }
+    if live_mcp_url is not None:
+        live_surface = _read_live_mcp_surface(live_mcp_url)
+        if live_surface != contract:
+            raise ReleaseVerificationError(
+                "Live MCP surface does not match the trusted canonical contract"
+            )
+        live_hash = hashlib.sha256(_canonical_json(live_surface)).hexdigest()
+        if live_hash != trusted_schema_hash:
+            raise ReleaseVerificationError("Live MCP canonical schema hash mismatch")
+        result["live_mcp_verified"] = True
+    return result

@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from sensai_plugin.package_builder import BuiltPackages, UnsafeSourceError, build_packages
 
 MCP_CONTRACT_VERSION = "1"
+_ATTESTATION_NAME = "sensai-mcp-attestation.json"
 _VERSION = re.compile(r"[0-9]+(?:\.[0-9]+){2}(?:[-+][A-Za-z0-9.-]+)?\Z")
 _ARCHIVE_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 _MARKETPLACE_NAME = "sensai-local"
@@ -32,6 +33,29 @@ def _canonical_json(value: Any) -> bytes:
 
 def _document_json(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+
+
+def _canonical_contract_surface(value: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    if set(value) != {"tools", "resources", "prompts"}:
+        raise UnsafeSourceError("MCP contract must contain tools, resources, and prompts")
+    surface: dict[str, list[dict[str, Any]]] = {}
+    for field in ("prompts", "resources", "tools"):
+        items = value[field]
+        if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+            raise UnsafeSourceError(f"MCP contract field must be an array of objects: {field}")
+        surface[field] = sorted(items, key=_canonical_json)
+    return surface
+
+
+def _attestation_bytes(*, schema_hash: str, mcp_url: str) -> bytes:
+    return _document_json(
+        {
+            "format_version": "1",
+            "mcp_contract_version": MCP_CONTRACT_VERSION,
+            "mcp_schema_sha256": schema_hash,
+            "mcp_url": mcp_url,
+        }
+    )
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -138,6 +162,18 @@ def _regular_files(root: Path) -> dict[str, bytes]:
     return files
 
 
+def _write_payload_attestation(payload_root: Path, content: bytes) -> None:
+    (payload_root / _ATTESTATION_NAME).write_bytes(content)
+    files = _regular_files(payload_root)
+    files.pop("MANIFEST.sha256")
+    (payload_root / "MANIFEST.sha256").write_bytes(
+        "".join(
+            f"{hashlib.sha256(file_content).hexdigest()}  {relative}\n"
+            for relative, file_content in sorted(files.items())
+        ).encode()
+    )
+
+
 def _write_archive(marketplace: Path, archive_path: Path) -> dict[str, str]:
     files = _regular_files(marketplace)
     with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_STORED) as archive:
@@ -177,7 +213,9 @@ def build_release(
     if output.exists() or output.is_symlink():
         raise UnsafeSourceError("Release output already exists")
     version = _plugin_version(source_root)
-    contract = _load_object(repository_root / "contracts" / "mcp-surface-v1.json")
+    contract = _canonical_contract_surface(
+        _load_object(repository_root / "contracts" / "mcp-surface-v1.json")
+    )
     schema_hash = hashlib.sha256(_canonical_json(contract)).hexdigest()
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{output.name}-release-", dir=output.parent))
@@ -189,6 +227,9 @@ def build_release(
                 source_root=prepared_source,
                 output_root=workspace / "packages",
             )
+            attestation = _attestation_bytes(schema_hash=schema_hash, mcp_url=mcp_url)
+            for payload_root in (packages.codex, packages.claude):
+                _write_payload_attestation(payload_root, attestation)
             platform_metadata: dict[str, Any] = {}
             for platform in ("codex", "claude"):
                 marketplace = _write_marketplace(workspace / "marketplaces", packages, platform)
