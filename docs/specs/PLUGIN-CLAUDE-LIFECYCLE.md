@@ -37,10 +37,12 @@ Code and performs one bounded lifecycle:
    byte-for-byte. Human-readable `claude mcp get` output is parsed as one exact plugin heading plus
    one exact `Type: http` and `URL: <release URL>` field; duplicate or suffix/prefix values fail.
 7. Keep the isolated profile alive for the caller, then delete it and prove the real profile is
-   unchanged. The sentinels cover the
-   config root entries and top-level config files, complete plugin cache and backup trees, resolved
-   targets, optional secure storage, Claude-specific XDG locations, repository-local `.claude`,
-   and home-level `.claude.json`. Unrelated history, projects, and sessions are not traversed.
+   unchanged. The guard watches only explicit Claude lifecycle surfaces: named settings files,
+   plugin state files, the `sensai-local` marketplace and plugin-cache namespaces, the backup root,
+   the home-level `.claude.json`, and Claude-specific XDG/secure-storage roots. Backup and cache
+   roots are inspected shallowly; only the two `sensai-local` namespaces are traversed, with
+   bounded depth, entry count, and file size. User history, projects, sessions, and unrelated
+   cache subtrees are never recursively read, and a limit violation fails closed.
 
 The lifecycle never rebuilds a release, installs an archive directly, modifies extracted release
 files, or uses the user's Claude profile. A tampered bundle fails before the first Claude command.

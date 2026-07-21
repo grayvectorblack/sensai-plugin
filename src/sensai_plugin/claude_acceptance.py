@@ -29,6 +29,10 @@ MAX_BUNDLE_FILE_BYTES = 20 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 128
 MAX_MEMBER_BYTES = 2 * 1024 * 1024
 MAX_EXTRACTED_BYTES = 8 * 1024 * 1024
+REAL_PROFILE_MAX_FILE_BYTES = 1 * 1024 * 1024
+REAL_PROFILE_MAX_DIRECT_ENTRIES = 256
+REAL_PROFILE_MAX_RECURSIVE_ENTRIES = 512
+REAL_PROFILE_MAX_RECURSIVE_DEPTH = 8
 PLUGIN_MCP_NAME = "plugin:sensai:sensai"
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _PASSTHROUGH_ENVIRONMENT_NAMES = (
@@ -513,26 +517,75 @@ def _fingerprint(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _fingerprint_shallow(path: Path) -> str:
+def _bounded_surface_fingerprint(
+    path: Path,
+    *,
+    recursive: bool,
+    depth: int = 0,
+) -> str:
+    """Fingerprint one explicit Claude surface without walking unrelated data."""
+    digest = hashlib.sha256()
     if not path.exists() and not path.is_symlink():
         return "missing"
-    if path.is_symlink() or path.is_file():
-        return _fingerprint(path)
-    digest = hashlib.sha256()
-    for entry in sorted(path.iterdir()):
-        digest.update(entry.name.encode())
-        mode = entry.lstat().st_mode
-        if entry.is_symlink():
+    try:
+        entry = path.lstat()
+    except OSError as error:
+        raise ClaudeAcceptanceError(f"could not inspect Claude profile surface: {path}") from error
+    digest.update(str(stat.S_IMODE(entry.st_mode)).encode())
+    if path.is_symlink():
+        digest.update(b"L")
+        digest.update(os.readlink(path).encode())
+        return digest.hexdigest()
+    if path.is_file():
+        if entry.st_size > REAL_PROFILE_MAX_FILE_BYTES:
+            raise ClaudeAcceptanceError(f"Claude profile surface file is too large: {path.name}")
+        digest.update(b"F")
+        digest.update(path.read_bytes())
+        return digest.hexdigest()
+    if not path.is_dir():
+        digest.update(b"O")
+        return digest.hexdigest()
+
+    digest.update(b"D")
+    try:
+        children = sorted(path.iterdir(), key=lambda child: child.name)
+    except OSError as error:
+        raise ClaudeAcceptanceError(
+            f"could not enumerate Claude profile surface: {path}"
+        ) from error
+    entry_limit = (
+        REAL_PROFILE_MAX_RECURSIVE_ENTRIES if recursive else REAL_PROFILE_MAX_DIRECT_ENTRIES
+    )
+    if len(children) > entry_limit:
+        raise ClaudeAcceptanceError(f"Claude profile surface has too many entries: {path.name}")
+    for child in children:
+        digest.update(child.name.encode())
+        child_stat = child.lstat()
+        digest.update(str(stat.S_IMODE(child_stat.st_mode)).encode())
+        if child.is_symlink():
             digest.update(b"L")
-            digest.update(os.readlink(entry).encode())
-        elif entry.is_file():
+            digest.update(os.readlink(child).encode())
+        elif child.is_file():
+            if child_stat.st_size > REAL_PROFILE_MAX_FILE_BYTES:
+                raise ClaudeAcceptanceError(
+                    f"Claude profile surface file is too large: {child.name}"
+                )
             digest.update(b"F")
-            digest.update(entry.read_bytes())
-        elif entry.is_dir():
+            digest.update(child.read_bytes())
+        elif child.is_dir():
             digest.update(b"D")
+            if recursive:
+                if depth >= REAL_PROFILE_MAX_RECURSIVE_DEPTH:
+                    raise ClaudeAcceptanceError(f"Claude profile surface is too deep: {child.name}")
+                digest.update(
+                    _bounded_surface_fingerprint(
+                        child,
+                        recursive=True,
+                        depth=depth + 1,
+                    ).encode()
+                )
         else:
             digest.update(b"O")
-        digest.update(str(stat.S_IMODE(mode)).encode())
     return digest.hexdigest()
 
 
@@ -575,9 +628,60 @@ def _real_profile_paths() -> tuple[Path, ...]:
     return tuple(dict.fromkeys(paths))
 
 
+def _real_profile_surfaces() -> tuple[tuple[str, Path, bool], ...]:
+    """Return only Claude surfaces the local plugin lifecycle can mutate.
+
+    The explicit Sensai namespaces are recursive and bounded. Config files and
+    Claude-owned cache roots are shallow; user history and unrelated cache trees
+    are intentionally not read.
+    """
+    home = Path.home()
+    config = Path(os.environ.get("CLAUDE_CONFIG_DIR", home / ".claude")).expanduser().absolute()
+    plugin_root = config / "plugins"
+    plugin_cache = (
+        Path(os.environ.get("CLAUDE_CODE_PLUGIN_CACHE_DIR", plugin_root / "cache"))
+        .expanduser()
+        .absolute()
+    )
+    surfaces: list[tuple[str, Path, bool]] = [
+        ("settings", config / "settings.json", False),
+        ("settings-local", config / "settings.local.json", False),
+        ("managed-settings", config / "managed-settings.json", False),
+        ("root-config-file", home / ".claude.json", False),
+        ("known-marketplaces", plugin_root / "known_marketplaces.json", False),
+        ("installed-plugins", plugin_root / "installed_plugins.json", False),
+        ("marketplace-sensai", plugin_root / "marketplaces" / "sensai-local", True),
+        ("plugin-cache-sensai", plugin_cache / "sensai-local", True),
+        ("backup-root", config / "backups", False),
+    ]
+    for label, root in (
+        ("xdg-cache-claude", "claude"),
+        ("xdg-cache-claude-cli", "claude-cli-nodejs"),
+    ):
+        surfaces.append(
+            (label, Path(os.environ.get("XDG_CACHE_HOME", home / ".cache")) / root, False)
+        )
+    for label, root in (
+        ("xdg-config-claude", "claude"),
+        ("xdg-data-claude", "claude"),
+        ("xdg-data-claude-code", "claude-code"),
+    ):
+        base = "XDG_CONFIG_HOME" if label.startswith("xdg-config") else "XDG_DATA_HOME"
+        default = home / (".config" if base == "XDG_CONFIG_HOME" else ".local/share")
+        surfaces.append((label, Path(os.environ.get(base, default)) / root, False))
+    if secure_storage := os.environ.get("CLAUDE_SECURESTORAGE_CONFIG_DIR"):
+        surfaces.append(("secure-storage", Path(secure_storage).expanduser().absolute(), False))
+    return tuple(surfaces)
+
+
 def _real_profile_fingerprint() -> dict[str, str]:
-    result = {f"recursive:{path}": _fingerprint(path) for path in _real_profile_paths()}
-    result.update({f"shallow:{path}": _fingerprint_shallow(path) for path in _real_config_roots()})
+    result: dict[str, str] = {}
+    for label, path, recursive in _real_profile_surfaces():
+        for variant in (path, path.resolve(strict=False)):
+            result[f"{label}:{variant}"] = _bounded_surface_fingerprint(
+                variant,
+                recursive=recursive,
+            )
     return result
 
 

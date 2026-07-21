@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -191,6 +192,47 @@ def test_real_profile_paths_cover_all_relevant_claude_state(
     assert config in roots
     assert config.resolve(strict=False) in roots
     assert config / "file-history" not in paths
+
+
+def test_real_profile_fingerprint_detects_marketplace_and_config_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _use_empty_real_claude_profile(monkeypatch, tmp_path)
+    config = Path(os.environ["CLAUDE_CONFIG_DIR"])
+    known_marketplaces = config / "plugins" / "known_marketplaces.json"
+    known_marketplaces.parent.mkdir(parents=True)
+    known_marketplaces.write_text('{"sensai-local": true}\n', encoding="utf-8")
+    (config / "settings.json").write_text('{"enabledPlugins": []}\n', encoding="utf-8")
+
+    before = lifecycle._real_profile_fingerprint()
+    known_marketplaces.write_text('{"sensai-local": false}\n', encoding="utf-8")
+    marketplace_changed = lifecycle._real_profile_fingerprint()
+    (config / "settings.json").write_text('{"enabledPlugins": ["sensai"]}\n', encoding="utf-8")
+
+    assert marketplace_changed != before
+    assert lifecycle._real_profile_fingerprint() != marketplace_changed
+
+
+def test_real_profile_fingerprint_does_not_recurse_into_unrelated_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _use_empty_real_claude_profile(monkeypatch, tmp_path)
+    cache = Path(os.environ["XDG_CACHE_HOME"]) / "claude-cli-nodejs" / "unrelated"
+    cache.mkdir(parents=True)
+    for index in range(300):
+        nested = cache / f"project-{index % 3}" / f"session-{index}"
+        nested.mkdir(parents=True)
+        (nested / "large-history.jsonl").write_bytes(b"x" * (64 * 1024))
+
+    started = time.monotonic()
+    before = lifecycle._real_profile_fingerprint()
+    elapsed = time.monotonic() - started
+    (cache / "project-0" / "session-0" / "large-history.jsonl").write_bytes(b"changed")
+
+    assert elapsed < 1.0
+    assert lifecycle._real_profile_fingerprint() == before
 
 
 @pytest.mark.claude_real_cli
