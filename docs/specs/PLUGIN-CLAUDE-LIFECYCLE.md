@@ -8,12 +8,20 @@ MCP-providing plugin without changing the user's real Claude profile.
 
 ## Acceptance
 
+`sensai_plugin.claude_acceptance.installed_claude_plugin` is the stable public acceptance context.
+It yields the exact installed selector, version, MCP URL, and still-live isolated profile. The
+command-line script is only a wrapper around that API, and external acceptance tests must import
+the public module rather than a script's private helpers.
+
 `scripts/test_claude_lifecycle.py --bundle <release-directory>` uses the locally installed Claude
-Code 2.1.193 and performs one bounded lifecycle:
+Code and performs one bounded lifecycle:
 
 1. Copy the regular bundle files once into a private read-only snapshot, then invoke
-   `scripts/verify_release.py` against that snapshot in a separate process. Reject any snapshot
-   change before metadata parsing, during extraction, or after verification.
+   `scripts/verify_release.py` against that snapshot in a separate process. The snapshot binds its
+   root and files to device, inode, mode, size, timestamp, and digest. Reject any replacement or
+   mutation after verification, extraction, Claude installation, discovery, or before cleanup.
+   The caller-provided bundle path itself must be a regular directory, not a symlink; this is checked
+   before any path resolution or Claude command.
 2. Extract the exact attested Claude marketplace archive once, rejecting unsafe or duplicate
    paths, size limit violations, non-regular entries, and any mismatch with release metadata.
 3. Verify every plugin byte against `MANIFEST.sha256`, including the exact MCP attestation, then
@@ -24,15 +32,22 @@ Code 2.1.193 and performs one bounded lifecycle:
    `claude plugin install sensai@sensai-local --scope user`, `claude plugin list --json`, and
    `claude mcp get plugin:sensai:sensai`.
 6. Require the exact selector, release version, user scope, isolated install path, MCP namespace,
-   transport, and release MCP URL. Require the extracted marketplace fingerprint to remain exact.
-7. Delete the temporary profile and prove the real profile is unchanged. The sentinels cover the
+   transport, and release MCP URL. The advertised installed path is not trusted: its complete payload
+   must be regular, contain no symlinks, and match the verified read-only marketplace payload
+   byte-for-byte. Human-readable `claude mcp get` output is parsed as one exact plugin heading plus
+   one exact `Type: http` and `URL: <release URL>` field; duplicate or suffix/prefix values fail.
+7. Keep the isolated profile alive for the caller, then delete it and prove the real profile is
+   unchanged. The sentinels cover the
    config root entries and top-level config files, complete plugin cache and backup trees, resolved
    targets, optional secure storage, Claude-specific XDG locations, repository-local `.claude`,
    and home-level `.claude.json`. Unrelated history, projects, and sessions are not traversed.
 
 The lifecycle never rebuilds a release, installs an archive directly, modifies extracted release
-files, or uses the user's Claude profile. A tampered bundle fails before the extraction directory
-is created.
+files, or uses the user's Claude profile. A tampered bundle fails before the first Claude command.
+Cleanup runs after a caller error and reports both the caller error and any cleanup failure.
+The temporary profile is rejected before any Claude command when it overlaps, is nested in, or contains
+any configured real Claude profile boundary, including the config root, plugin cache, secure storage,
+home-level configuration, XDG locations, and repository-local `.claude` state.
 
 ## Claim Boundary
 
