@@ -1,0 +1,23 @@
+{
+  "name": "sensai",
+  "version": "0.1.0",
+  "description": "Connects an AI agent to Sensai guidance through MCP.",
+  "author": {
+    "name": "Sergey Skripko",
+    "email": "sergey@black-vector.com",
+    "url": "https://black-vector.com/"
+  },
+  "homepage": "https://black-vector.com/",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Sensai",
+    "shortDescription": "Practical guidance for your AI agent",
+    "longDescription": "Sensai helps an AI agent choose, set up, and recover useful workflows.",
+    "developerName": "Sergey Skripko",
+    "category": "Productivity",
+    "capabilities": ["Interactive"],
+    "websiteURL": "https://black-vector.com/",
+    "defaultPrompt": ["Ask Sensai which workflow would help me most."]
+  }
+}

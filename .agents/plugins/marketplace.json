@@ -1,0 +1,20 @@
+{
+  "name": "sensai",
+  "interface": {
+    "displayName": "Sensai"
+  },
+  "plugins": [
+    {
+      "name": "sensai",
+      "source": {
+        "source": "local",
+        "path": "./plugins/sensai"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

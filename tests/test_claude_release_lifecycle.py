@@ -324,7 +324,11 @@ elif arguments == ["plugin", "list", "--json"]:
         "scope": "user",
         "enabled": True,
         "installPath": str(installed),
-        "mcpServers": {"sensai": {"type": "http", "url": __URL__}},
+        "mcpServers": {"sensai": {
+            "type": "http",
+            "url": __URL__,
+            "headers": {"Authorization": "Bearer ${SENSAI_INVITE_TOKEN}"},
+        }},
     }]))
 elif arguments == ["mcp", "get", "plugin:sensai:sensai"]:
     print("plugin:sensai:sensai:\\nType: http\\nURL: " + __MCP_GET_URL__)
