@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
@@ -8,24 +7,20 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from types import ModuleType
-from typing import cast
 
 import pytest
 
+from sensai_plugin import codex_acceptance
+from sensai_plugin.codex_acceptance import (
+    CodexAcceptanceError,
+    InstalledCodexPlugin,
+    fingerprint_codex_plugin_state,
+    installed_codex_plugin,
+)
 from sensai_plugin.release_builder import build_release
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 MCP_URL = "https://black-vector.com/sensai/mcp"
-
-
-def _lifecycle_module() -> ModuleType:
-    path = REPOSITORY_ROOT / "scripts" / "test_codex_lifecycle.py"
-    specification = importlib.util.spec_from_file_location("sensai_codex_lifecycle", path)
-    assert specification is not None and specification.loader is not None
-    module = importlib.util.module_from_spec(specification)
-    specification.loader.exec_module(module)
-    return module
 
 
 @pytest.fixture(scope="module")
@@ -66,97 +61,7 @@ def _run_lifecycle(
     )
 
 
-def test_codex_profile_fingerprint_covers_complete_tree_and_resolved_symlink(
-    tmp_path: Path,
-) -> None:
-    module = _lifecycle_module()
-    target = tmp_path / "profile-target"
-    target.mkdir()
-    configured = tmp_path / "configured-codex-home"
-    configured.symlink_to(target, target_is_directory=True)
-    before = module._real_codex_profile_fingerprint(configured)
-
-    marketplace_state = target / ".tmp" / "marketplaces" / "global.json"
-    marketplace_state.parent.mkdir(parents=True)
-    marketplace_state.write_text('{"changed": true}\n', encoding="utf-8")
-
-    assert module._real_codex_profile_fingerprint(configured) != before
-
-    after_boundary_change = module._real_codex_profile_fingerprint(configured)
-    unrelated = target / "sessions" / "unrelated.jsonl"
-    unrelated.parent.mkdir()
-    unrelated.write_text("unrelated runtime state\n", encoding="utf-8")
-
-    assert module._real_codex_profile_fingerprint(configured) == after_boundary_change
-
-
-def test_codex_profile_fingerprint_skips_unrelated_tmp_plugins_but_detects_sensai(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module = _lifecycle_module()
-    profile = tmp_path / "codex-home"
-    unrelated = profile / ".tmp" / "plugins" / "plugins" / "unrelated-backup"
-    unrelated.mkdir(parents=True)
-    for index in range(200):
-        (unrelated / f"payload-{index}.bin").write_bytes(b"x" * 4096)
-    original_sha256_file = module._sha256_file
-    hashed: list[Path] = []
-
-    def recording_sha256_file(path: Path) -> str:
-        hashed.append(path)
-        return cast(str, original_sha256_file(path))
-
-    monkeypatch.setattr(module, "_sha256_file", recording_sha256_file)
-    started = time.monotonic()
-    before = module._real_codex_profile_fingerprint(profile)
-    elapsed = time.monotonic() - started
-
-    assert elapsed < 1.0
-    assert all(not path.is_relative_to(unrelated) for path in hashed)
-    (unrelated / "payload-0.bin").write_bytes(b"changed but unrelated")
-    assert module._real_codex_profile_fingerprint(profile) == before
-
-    sensai = profile / ".tmp" / "plugins" / "plugins" / "sensai" / "marker.json"
-    sensai.parent.mkdir()
-    sensai.write_text('{"sensai": true}\n', encoding="utf-8")
-
-    assert module._real_codex_profile_fingerprint(profile) != before
-
-
-def test_codex_lifecycle_rejects_tampering_before_invoking_codex(
-    tmp_path: Path,
-    release_bundle: Path,
-) -> None:
-    bundle = tmp_path / "release"
-    shutil.copytree(release_bundle, bundle)
-    archive = bundle / "sensai-0.1.0-codex-marketplace.zip"
-    archive.write_bytes(archive.read_bytes() + b"tampered")
-
-    marker = tmp_path / "codex-was-invoked"
-    executable = tmp_path / "codex"
-    executable.write_text(
-        f"#!/bin/sh\nprintf invoked > {marker!s}\nprintf '{{}}\\n'\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    completed = _run_lifecycle(
-        bundle=bundle,
-        executable_directory=tmp_path,
-        real_profile=tmp_path / "real-profile",
-    )
-
-    assert completed.returncode != 0
-    assert "release verification failed" in completed.stderr
-    assert not marker.exists()
-
-
-def test_codex_lifecycle_uses_exact_read_only_marketplace_and_isolated_profile(
-    tmp_path: Path,
-    release_bundle: Path,
-) -> None:
-    log = tmp_path / "commands.jsonl"
-    executable = tmp_path / "codex"
+def _write_fake_codex(executable: Path, log: Path) -> None:
     fake_codex = """#!/usr/bin/env python3
 import json
 import os
@@ -194,9 +99,93 @@ elif arguments == ["mcp", "list", "--json"]:
 else:
     raise SystemExit("unexpected command: " + repr(arguments))
 """
-    fake_codex = fake_codex.replace("__LOG__", repr(str(log))).replace("__URL__", repr(MCP_URL))
-    executable.write_text(fake_codex, encoding="utf-8")
+    executable.write_text(
+        fake_codex.replace("__LOG__", repr(str(log))).replace("__URL__", repr(MCP_URL)),
+        encoding="utf-8",
+    )
     executable.chmod(0o755)
+
+
+def test_codex_profile_fingerprint_covers_complete_tree_and_resolved_symlink(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "profile-target"
+    target.mkdir()
+    configured = tmp_path / "configured-codex-home"
+    configured.symlink_to(target, target_is_directory=True)
+    before = fingerprint_codex_plugin_state(configured)
+
+    marketplace_state = target / ".tmp" / "marketplaces" / "global.json"
+    marketplace_state.parent.mkdir(parents=True)
+    marketplace_state.write_text('{"changed": true}\n', encoding="utf-8")
+
+    assert fingerprint_codex_plugin_state(configured) != before
+
+    after_boundary_change = fingerprint_codex_plugin_state(configured)
+    unrelated = target / "sessions" / "unrelated.jsonl"
+    unrelated.parent.mkdir()
+    unrelated.write_text("unrelated runtime state\n", encoding="utf-8")
+
+    assert fingerprint_codex_plugin_state(configured) == after_boundary_change
+
+
+def test_codex_profile_fingerprint_skips_unrelated_tmp_plugins_but_detects_sensai(
+    tmp_path: Path,
+) -> None:
+    profile = tmp_path / "codex-home"
+    unrelated = profile / ".tmp" / "plugins" / "plugins" / "unrelated-backup"
+    unrelated.mkdir(parents=True)
+    for index in range(200):
+        (unrelated / f"payload-{index}.bin").write_bytes(b"x" * 4096)
+    started = time.monotonic()
+    before = fingerprint_codex_plugin_state(profile)
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 1.0
+    (unrelated / "payload-0.bin").write_bytes(b"changed but unrelated")
+    assert fingerprint_codex_plugin_state(profile) == before
+
+    sensai = profile / ".tmp" / "plugins" / "plugins" / "sensai" / "marker.json"
+    sensai.parent.mkdir()
+    sensai.write_text('{"sensai": true}\n', encoding="utf-8")
+
+    assert fingerprint_codex_plugin_state(profile) != before
+
+
+def test_codex_lifecycle_rejects_tampering_before_invoking_codex(
+    tmp_path: Path,
+    release_bundle: Path,
+) -> None:
+    bundle = tmp_path / "release"
+    shutil.copytree(release_bundle, bundle)
+    archive = bundle / "sensai-0.1.0-codex-marketplace.zip"
+    archive.write_bytes(archive.read_bytes() + b"tampered")
+
+    marker = tmp_path / "codex-was-invoked"
+    executable = tmp_path / "codex"
+    executable.write_text(
+        f"#!/bin/sh\nprintf invoked > {marker!s}\nprintf '{{}}\\n'\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    completed = _run_lifecycle(
+        bundle=bundle,
+        executable_directory=tmp_path,
+        real_profile=tmp_path / "real-profile",
+    )
+
+    assert completed.returncode != 0
+    assert "release verification failed" in completed.stderr
+    assert not marker.exists()
+
+
+def test_codex_lifecycle_uses_exact_read_only_marketplace_and_isolated_profile(
+    tmp_path: Path,
+    release_bundle: Path,
+) -> None:
+    log = tmp_path / "commands.jsonl"
+    executable = tmp_path / "codex"
+    _write_fake_codex(executable, log)
     real_profile = tmp_path / "real-profile"
     real_profile.mkdir()
     sentinel = real_profile / "config.toml"
@@ -232,11 +221,108 @@ else:
     }
 
 
+def test_public_acceptance_context_keeps_profile_alive_and_cleans_after_body_failure(
+    tmp_path: Path,
+    release_bundle: Path,
+) -> None:
+    log = tmp_path / "public-api-commands.jsonl"
+    executable = tmp_path / "codex"
+    _write_fake_codex(executable, log)
+    real_profile = tmp_path / "real-profile"
+    real_profile.mkdir()
+    sentinel = real_profile / "config.toml"
+    sentinel.write_text("model = 'unchanged'\n", encoding="utf-8")
+    live_profile: Path | None = None
+
+    with (
+        pytest.raises(RuntimeError, match="body failed"),
+        installed_codex_plugin(
+            release_bundle,
+            codex_executable=str(executable),
+            real_codex_home=real_profile,
+        ) as installed,
+    ):
+        assert isinstance(installed, InstalledCodexPlugin)
+        assert installed.selector == "sensai@sensai-local"
+        assert installed.version == "0.1.0"
+        assert installed.mcp_url == MCP_URL
+        assert installed.profile.exists()
+        assert (installed.profile / "codex-home").is_dir()
+        live_profile = installed.profile
+        raise RuntimeError("body failed")
+
+    assert live_profile is not None and not live_profile.exists()
+    assert sentinel.read_text(encoding="utf-8") == "model = 'unchanged'\n"
+
+
+def test_public_acceptance_rejects_snapshot_replacement_after_verification_before_codex(
+    tmp_path: Path,
+    release_bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker = tmp_path / "codex-was-invoked"
+    executable = tmp_path / "codex"
+    executable.write_text(
+        f"#!/bin/sh\nprintf invoked > {marker!s}\nprintf '{{}}\\n'\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    original_verify = codex_acceptance._verify_release
+
+    def verify_then_replace(snapshot: Path) -> dict[str, object]:
+        result = original_verify(snapshot)
+        original = snapshot.with_name("release-snapshot-original")
+        snapshot.rename(original)
+        shutil.copytree(original, snapshot, copy_function=shutil.copy2)
+        return result
+
+    monkeypatch.setattr(codex_acceptance, "_verify_release", verify_then_replace)
+
+    with (
+        pytest.raises(BaseException) as caught,
+        installed_codex_plugin(
+            release_bundle,
+            codex_executable=str(executable),
+            real_codex_home=tmp_path / "real-profile",
+        ),
+    ):
+        pytest.fail("replaced snapshot must not reach the caller")
+
+    assert "changed after independent verification" in repr(caught.value)
+    assert not marker.exists()
+
+
+def test_public_acceptance_rejects_physical_overlap_through_codex_home_symlink(
+    tmp_path: Path,
+    release_bundle: Path,
+) -> None:
+    configured_home = tmp_path / "configured-codex-home"
+    configured_home.symlink_to("/tmp", target_is_directory=True)
+    marker = tmp_path / "codex-was-invoked"
+    executable = tmp_path / "codex"
+    executable.write_text(
+        f"#!/bin/sh\nprintf invoked > {marker!s}\nprintf '{{}}\\n'\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+
+    with (
+        pytest.raises(CodexAcceptanceError, match="overlaps"),
+        installed_codex_plugin(
+            release_bundle,
+            codex_executable=str(executable),
+            real_codex_home=configured_home,
+        ),
+    ):
+        pytest.fail("overlapping profile must not reach the caller")
+
+    assert not marker.exists()
+
+
 @pytest.mark.codex_real_cli
 def test_codex_lifecycle_with_installed_official_cli(release_bundle: Path) -> None:
     codex = shutil.which("codex")
-    if codex is None:
-        pytest.skip("official Codex CLI is not installed")
+    assert codex is not None, "official Codex CLI is required for explicit real-CLI acceptance"
     completed = subprocess.run(
         [
             sys.executable,
@@ -259,3 +345,13 @@ def test_codex_lifecycle_with_installed_official_cli(release_bundle: Path) -> No
     assert (
         "PASS isolated-profile=removed real-plugin-lifecycle-boundary=unchanged" in completed.stdout
     )
+
+
+def test_explicit_real_cli_acceptance_fails_when_codex_is_unavailable(
+    release_bundle: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    with pytest.raises(AssertionError, match="official Codex CLI is required"):
+        test_codex_lifecycle_with_installed_official_cli(release_bundle)
