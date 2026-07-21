@@ -437,6 +437,8 @@ def test_mcp_min_r05_packages_exact_public_http_manifest(source_copy: Path, tmp_
             "sensai": {
                 "type": "http",
                 "url": "https://black-vector.com/sensai/mcp",
+                "bearer_token_env_var": "SENSAI_INVITE_TOKEN",
+                "headers": {"Authorization": "Bearer ${SENSAI_INVITE_TOKEN}"},
             }
         }
     }
@@ -444,7 +446,12 @@ def test_mcp_min_r05_packages_exact_public_http_manifest(source_copy: Path, tmp_
     source_manifest = _load_json(source_manifest_path)
     assert source_manifest == expected_manifest
     assert set(source_manifest["mcpServers"]) == {"sensai"}
-    assert set(source_manifest["mcpServers"]["sensai"]) == {"type", "url"}
+    assert set(source_manifest["mcpServers"]["sensai"]) == {
+        "type",
+        "url",
+        "bearer_token_env_var",
+        "headers",
+    }
 
     endpoint = urlsplit(source_manifest["mcpServers"]["sensai"]["url"])
     assert endpoint.scheme == "https"

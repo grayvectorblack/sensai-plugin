@@ -2,7 +2,11 @@
   "mcpServers": {
     "sensai": {
       "type": "http",
-      "url": "https://black-vector.com/sensai/mcp"
+      "url": "https://black-vector.com/sensai/mcp",
+      "bearer_token_env_var": "SENSAI_INVITE_TOKEN",
+      "headers": {
+        "Authorization": "Bearer ${SENSAI_INVITE_TOKEN}"
+      }
     }
   }
 }
