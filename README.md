@@ -1,31 +1,45 @@
 # Sensai Plugin
 
 Sensai connects Codex or Claude to a remote adviser that helps an AI agent understand the user's
-work, compare useful automations, and plan a practical first workflow. The current demo advises the
-agent; it does not connect to Gmail, Google Sheets, or other external services on the user's behalf.
+work, compare useful automations, and prepare a practical first workflow. After the user selects a
+vetted automation, the plugin may create its declared local files and run its generator plus an
+independent verification through Codex's normal file and command approval. The first demo package
+turns a sample marketing CSV into a verified weekly Markdown report. It does not connect to Gmail,
+Google Sheets, or other external services on the user's behalf.
 
 ## Colleague demo setup: Windows and Codex Desktop
 
-The project owner gives each colleague a temporary invitation key. Do not paste that key into a
-chat or save it in source code. Open PowerShell and store it as a User environment variable,
-replacing the visible placeholder with the provided key:
+The project owner gives each colleague one private link shaped like
+`https://black-vector.com/sensai/invite#...`. Send that link to Codex with one request: "Install
+Sensai from this invitation." Codex reads the fixed invitation page and this repository, downloads
+[`bootstrap/install-sensai.ps1`](bootstrap/install-sensai.ps1) together with
+[`bootstrap/MANIFEST.sha256`](bootstrap/MANIFEST.sha256), verifies that the script's SHA-256
+checksum matches the manifest, and runs the helper with the original invitation URL. The checksum
+identifies the exact reviewed bootstrap file in this public repository.
 
-```powershell
-[Environment]::SetEnvironmentVariable("SENSAI_INVITE_TOKEN", "<invitation-key>", "User")
-```
+The helper installs the public marketplace and plugin first. Only after installation succeeds does
+it redeem the one-time code in a request body. The one-time code appears in the original request to
+Codex by design; after successful redemption it cannot be used again. The longer-lived access value
+is never displayed in chat, command output, or a command line. It is written only to the current
+Windows user's persistent environment after all Codex installation child processes have finished.
+This bootstrap currently supports Windows Codex Desktop only and relies on the current user's
+Windows registry permissions to keep the stored value unavailable to other Windows accounts. Apps
+running as the same Windows user can still read that user's environment.
 
-Fully quit Codex Desktop, including any remaining Codex windows, and reopen it so the application
-inherits the new environment variable. In a terminal, add the public marketplace and install the
-plugin:
+Codex loads newly installed plugin instructions and tools only in a fresh session. After the
+installation finishes, fully restart Codex Desktop and start a new chat. This restart and new chat
+are unavoidable because the installation conversation cannot load a plugin that did not exist when
+that conversation started. In the fresh chat, use a natural request such as:
 
-```powershell
-codex plugin marketplace add grayskripko/sensai-plugin
-codex plugin add sensai@sensai
-```
+> Let's get started with Sensai.
 
-Start a new Codex chat and try this first prompt:
+The agent contacts Sensai, relays its introduction, and asks what the colleague does for work and
+which one to five programs or websites they use most often. The colleague does not need to enter
+plugin commands, handle credentials, or describe an automation idea in this second chat.
 
-> I work in marketing. Help me choose one routine that would be useful to automate first.
+If installation fails before Sensai starts, the agent may send one short error description to the
+public `POST https://black-vector.com/sensai/install-help/search` endpoint. It must not include
+credentials, files, or chat history.
 
 Build and lifecycle contracts are documented under `docs/specs/`.
 

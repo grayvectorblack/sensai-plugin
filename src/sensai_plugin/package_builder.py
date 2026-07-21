@@ -47,6 +47,10 @@ _SOURCE_TO_PAYLOADS: dict[str, tuple[tuple[str, str], ...]] = {
         ("codex", "skills/sensai/SKILL.md"),
         ("claude", "skills/sensai/SKILL.md"),
     ),
+    "shared/skills/sensai/scripts/package_runner.py": (
+        ("codex", "skills/sensai/scripts/package_runner.py"),
+        ("claude", "skills/sensai/scripts/package_runner.py"),
+    ),
     "codex/.codex-plugin/plugin.json": (("codex", ".codex-plugin/plugin.json"),),
     "claude/.claude-plugin/plugin.json": (("claude", ".claude-plugin/plugin.json"),),
 }
@@ -56,6 +60,7 @@ _REQUIRED_DIRECTORIES = frozenset(
         "shared",
         "shared/skills",
         "shared/skills/sensai",
+        "shared/skills/sensai/scripts",
         "codex",
         "codex/.codex-plugin",
         "claude",
@@ -64,16 +69,24 @@ _REQUIRED_DIRECTORIES = frozenset(
 )
 _EXPECTED_PAYLOAD_FILES: dict[str, frozenset[str]] = {
     "codex": frozenset(
-        {".codex-plugin/plugin.json", ".mcp.json", "skills/sensai/SKILL.md"}
+        {
+            ".codex-plugin/plugin.json",
+            ".mcp.json",
+            "skills/sensai/SKILL.md",
+            "skills/sensai/scripts/package_runner.py",
+        }
     ),
     "claude": frozenset(
-        {".claude-plugin/plugin.json", ".mcp.json", "skills/sensai/SKILL.md"}
+        {
+            ".claude-plugin/plugin.json",
+            ".mcp.json",
+            "skills/sensai/SKILL.md",
+            "skills/sensai/scripts/package_runner.py",
+        }
     ),
 }
 _WINDOWS_ABSOLUTE_PATH = re.compile(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/]")
-_POSIX_ABSOLUTE_PATH = re.compile(
-    r"(?<![/:A-Za-z0-9_])/(?!/)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+"
-)
+_POSIX_ABSOLUTE_PATH = re.compile(r"(?<![/:A-Za-z0-9_])/(?!/)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+")
 _POSIX_SINGLE_SEGMENT_ROOT = re.compile(
     r"(?<![/:A-Za-z0-9_])/(?:bin|dev|etc|home|media|mnt|opt|proc|root|run|sbin|srv|sys|"
     r"tmp|usr|var|Users|Volumes)(?=$|[\s`'\"\]),.;])"
@@ -305,9 +318,7 @@ def build_packages(*, source_root: Path, output_root: Path) -> BuiltPackages:
         raise UnsafeSourceError("Payload source and package output roots must not overlap")
     output_parent = output_root.parent
     output_parent.mkdir(parents=True, exist_ok=True)
-    staging_root = Path(
-        tempfile.mkdtemp(prefix=f".{output_root.name}-build-", dir=output_parent)
-    )
+    staging_root = Path(tempfile.mkdtemp(prefix=f".{output_root.name}-build-", dir=output_parent))
     try:
         _write_payload(staging_root, source_bytes, "codex")
         _write_payload(staging_root, source_bytes, "claude")

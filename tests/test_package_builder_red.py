@@ -26,12 +26,14 @@ EXPECTED_PAYLOAD_FILES = {
         ".mcp.json",
         "MANIFEST.sha256",
         "skills/sensai/SKILL.md",
+        "skills/sensai/scripts/package_runner.py",
     },
     "claude": {
         ".claude-plugin/plugin.json",
         ".mcp.json",
         "MANIFEST.sha256",
         "skills/sensai/SKILL.md",
+        "skills/sensai/scripts/package_runner.py",
     },
 }
 

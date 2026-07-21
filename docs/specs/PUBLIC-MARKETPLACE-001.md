@@ -5,8 +5,9 @@
 A colleague gives Codex the public repository `grayskripko/sensai-plugin`. Codex can add that
 repository as a marketplace without building source code or reading private server files. The
 marketplace exposes one ready `sensai` plugin configured for the public HTTPS MCP endpoint. The
-repository contains no invitation key; each colleague supplies their own key locally through the
-`SENSAI_INVITE_TOKEN` environment variable.
+repository contains no invitation or access key. A colleague gives her agent one fixed invitation
+page URL with a one-time code in its fragment. The Windows bootstrap redeems the code and writes the
+issued access value directly to the user environment without displaying it.
 
 ## Contract
 
