@@ -4,21 +4,28 @@ Sensai connects Codex or Claude to a remote adviser that helps an AI agent under
 work, compare useful automations, and plan a practical first workflow. The current demo advises the
 agent; it does not connect to Gmail, Google Sheets, or other external services on the user's behalf.
 
-## Colleague demo status
+## Colleague demo setup: Windows and Codex Desktop
 
-The plugin supports Codex and Claude Code and connects to
-`https://black-vector.com/sensai/mcp`. Each colleague needs a private invitation key from the
-project owner. The key is stored locally as `SENSAI_INVITE_TOKEN`; it must not be pasted into a chat,
-committed to Git, or added to this repository.
+The project owner gives each colleague a temporary invitation key. Do not paste that key into a
+chat or save it in source code. Open PowerShell and store it as a User environment variable,
+replacing the visible placeholder with the provided key:
 
-For Codex, add the public marketplace directly:
-
-```sh
-codex plugin marketplace add grayskripko/sensai-plugin
+```powershell
+[Environment]::SetEnvironmentVariable("SENSAI_INVITE_TOKEN", "<invitation-key>", "User")
 ```
 
-Then install the `sensai` plugin from that marketplace in Codex. The repository already contains
-the ready plugin payload; a colleague does not need to build it from source.
+Fully quit Codex Desktop, including any remaining Codex windows, and reopen it so the application
+inherits the new environment variable. In a terminal, add the public marketplace and install the
+plugin:
+
+```powershell
+codex plugin marketplace add grayskripko/sensai-plugin
+codex plugin add sensai@sensai
+```
+
+Start a new Codex chat and try this first prompt:
+
+> I work in marketing. Help me choose one routine that would be useful to automate first.
 
 Build and lifecycle contracts are documented under `docs/specs/`.
 
