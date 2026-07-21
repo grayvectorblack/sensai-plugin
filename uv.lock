@@ -793,7 +793,7 @@ wheels = [
 [[package]]
 name = "sensai-plugin-build"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [

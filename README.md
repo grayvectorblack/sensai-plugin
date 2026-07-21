@@ -4,6 +4,10 @@ Public plugin packaging for connecting Codex and Claude to the Sensai MCP server
 
 Build and lifecycle contracts are documented under `docs/specs/`.
 
+The repository is also an installable Python package. External E2E drivers can import its public
+acceptance helpers from a fresh clone with `uv run python /path/to/driver.py`; they do not need to
+manually add `src/` to `PYTHONPATH`.
+
 Run the offline Codex package lifecycle acceptance with:
 
 ```sh
