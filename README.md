@@ -26,10 +26,10 @@ This bootstrap currently supports Windows Codex Desktop only and relies on the c
 Windows registry permissions to keep the stored value unavailable to other Windows accounts. Apps
 running as the same Windows user can still read that user's environment.
 
-Codex loads newly installed plugin instructions and tools only in a fresh session. After the
-installation finishes, fully restart Codex Desktop and start a new chat. This restart and new chat
-are unavoidable because the installation conversation cannot load a plugin that did not exist when
-that conversation started. In the fresh chat, use a natural request such as:
+Codex loads newly installed plugin instructions and tools in a fresh chat. After the installation
+finishes, start a new chat with Codex. A full application restart is normally unnecessary; use it
+only if Sensai does not appear in the new chat. The installation conversation cannot load a plugin
+that did not exist when that conversation started. In the fresh chat, use a natural request such as:
 
 > Let's get started with Sensai.
 

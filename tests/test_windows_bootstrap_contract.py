@@ -49,7 +49,7 @@ def test_public_readme_has_only_one_link_agent_driven_setup() -> None:
     assert "bootstrap/MANIFEST.sha256" in readme
     assert "one-time" in readme.lower()
     assert "cannot be used again" in readme.lower()
-    assert "fully restart Codex Desktop" in readme
+    assert "A full application restart is normally unnecessary" in readme
     assert "new chat" in readme
 
 
