@@ -13,10 +13,11 @@ locally through your platform's normal controls. Perform every step you can auto
 user only for genuine authorization or consent, payment, secrets that must be entered locally, or
 confirmation before an irreversible action or external side effect.
 
-After the plugin is loaded, contact Sensai immediately with a brief, natural greeting. Native OAuth
-may pause this first contact while your user authorizes access; continue the same request afterward.
-Ask Sensai to introduce itself and explain what it needs next. Do not ask your user for a work
-scenario before this first contact, and do not require your user to type a setup phrase.
+After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting that asks
+Sensai to introduce itself and explain what it needs next. Native OAuth may pause this first call
+while your user authorizes access; continue the same request afterward. Do not use a fixed setup
+phrase, ask your user for a work scenario before this call, or require your user to type another
+command.
 
 Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
 their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;

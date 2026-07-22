@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -21,17 +24,18 @@ def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
 
     assert "Sensai is another AI agent. You are the user's AI agent" in skill
     assert (
-        "After the plugin is loaded, contact Sensai immediately with a brief, natural greeting"
+        "After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting"
         in skill
     )
-    assert "Native OAuth may pause this first contact" in skill
-    assert "Ask Sensai to introduce itself and explain what it needs next." in skill
+    assert "asks Sensai to introduce itself and explain what it needs next" in skill
+    assert "Native OAuth may pause this first call" in skill
 
 
 def test_first_use_requires_no_second_human_command() -> None:
     skill = _normalized_skill()
 
-    assert "do not require your user to type a setup phrase" in skill
+    assert "Do not use a fixed setup phrase" in skill
+    assert "require your user to type another command" in skill
 
 
 def test_agents_use_compact_english_but_the_human_keeps_their_language() -> None:
@@ -103,6 +107,34 @@ def test_readme_prominently_explains_deliberate_text_sharing_and_opening_questio
     assert "https://github.com/grayvectorblack/sensai-plugin" in introduction
     assert "Connector setup also happens locally." in introduction
     assert "The person completes any authorization or consent screen." in introduction
+
+
+def test_documented_release_build_command_matches_and_executes_the_cli(tmp_path: Path) -> None:
+    readme = README.read_text(encoding="utf-8")
+    command_line = next(
+        line
+        for line in readme.splitlines()
+        if line.startswith("uv run python scripts/build_release.py ")
+    )
+    documented = shlex.split(command_line)
+
+    assert documented[:4] == ["uv", "run", "python", "scripts/build_release.py"]
+    assert documented[4:] == [
+        "--output",
+        "/path/to/release",
+        "--mcp-url",
+        "https://black-vector.com/sensai/mcp",
+    ]
+
+    output = tmp_path / "release"
+    arguments = documented[4:]
+    arguments[arguments.index("/path/to/release")] = str(output)
+    subprocess.run(
+        [sys.executable, str(REPOSITORY_ROOT / documented[3]), *arguments],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+    )
+    assert (output / "release.json").is_file()
 
 
 def test_magic_first_contact_phrase_is_absent_from_shipped_artifacts() -> None:

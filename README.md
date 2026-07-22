@@ -79,7 +79,7 @@ uv run python scripts/sync_public_marketplace.py --check
 Build and verify the immutable release artifacts:
 
 ```sh
-uv run python scripts/build_release.py --output /path/to/release
+uv run python scripts/build_release.py --output /path/to/release --mcp-url https://black-vector.com/sensai/mcp
 uv run python scripts/verify_release.py --bundle /path/to/release
 ```
 
