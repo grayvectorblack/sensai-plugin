@@ -37,7 +37,7 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 # canonical manifest and every declared file byte match this exact digest.
 TRUSTED_PACKAGE_DIGESTS = {
     "marketing-csv-weekly-report": (
-        "07a8e3ebdd21bf84654c8ba8eb934f9f5bd8cf81220d1a897bb600bb96f00de9"
+        "56533ef3243b5c775b69e613880b5614593fa8560635493d56311f90daffff3d"
     ),
 }
 

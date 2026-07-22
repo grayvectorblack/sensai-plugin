@@ -4,8 +4,8 @@ Sensai connects Codex or Claude to a remote adviser that helps an AI agent under
 work, compare useful automations, and prepare a practical first workflow. After the user selects a
 vetted automation, the plugin may create its declared local files and run its generator plus an
 independent verification through Codex's normal file and command approval. The first demo package
-turns a sample marketing CSV into a verified weekly Markdown report. It does not connect to Gmail,
-Google Sheets, or other external services on the user's behalf.
+turns a sample marketing CSV into a verified, self-contained weekly HTML report. It does not
+connect to Gmail, Google Sheets, or other external services on the user's behalf.
 
 ## Colleague demo setup: Windows and Codex Desktop
 

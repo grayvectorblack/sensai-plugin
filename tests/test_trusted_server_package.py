@@ -16,7 +16,8 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SERVER_ROOT = PLUGIN_ROOT.parent / "server"
 PACKAGE_ROOT = SERVER_ROOT / "src" / "sensai" / "workflows" / "marketing_csv_weekly_report"
 PACKAGE_ID = "marketing-csv-weekly-report"
-EXPECTED_OUTPUT = "weekly-marketing-report.md"
+EXPECTED_OUTPUT = "weekly-marketing-report.html"
+LEGACY_MARKDOWN_DIGEST = "07a8e3ebdd21bf84654c8ba8eb934f9f5bd8cf81220d1a897bb600bb96f00de9"
 
 
 def _descriptor(name: str, content: str) -> dict[str, object]:
@@ -100,7 +101,29 @@ def test_real_server_payload_runs_then_verifies_through_distributed_runner(
     }
     report = tmp_path / ".sensai" / "automations" / PACKAGE_ID / EXPECTED_OUTPUT
     assert report.is_file()
-    assert "# Weekly Marketing Report" in report.read_text(encoding="utf-8")
+    generated = report.read_text(encoding="utf-8")
+    assert generated.startswith("<!doctype html>")
+    assert "<h1>Weekly Marketing Report</h1>" in generated
+    assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in generated
+
+
+def test_legacy_markdown_release_is_not_trusted(tmp_path: Path) -> None:
+    payload = _real_payload()
+    package = _package(payload)
+    manifest = package["manifest"]
+    assert isinstance(manifest, dict)
+    manifest["generated_outputs"] = ["weekly-marketing-report.md"]
+    records = package["files"]
+    assert isinstance(records, list)
+    manifest_record = next(item for item in records if item["name"] == "manifest.json")
+    legacy_manifest = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
+    manifest_record.update(_descriptor("manifest.json", legacy_manifest))
+
+    assert LEGACY_MARKDOWN_DIGEST not in package_runner.TRUSTED_PACKAGE_DIGESTS.values()
+    result = package_runner.run_package(payload, tmp_path)
+    assert result.status == "failed"
+    assert result.stage == "validation"
+    assert not (tmp_path / ".sensai").exists()
 
 
 @pytest.mark.parametrize("damage", ["unknown_id", "modified_file"])
@@ -205,7 +228,7 @@ def test_failure_removes_entire_transaction_directory(
 def test_malformed_csv_fails_cleanly_without_report(tmp_path: Path) -> None:
     malformed = tmp_path / "bad.csv"
     malformed.write_text("campaign,spend,clicks\nA,10,2\n", encoding="utf-8")
-    report = tmp_path / "must-not-exist.md"
+    report = tmp_path / "must-not-exist.html"
 
     result = subprocess.run(
         [
