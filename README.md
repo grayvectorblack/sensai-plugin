@@ -10,8 +10,12 @@ connect to Gmail, Google Sheets, or other external services on the user's behalf
 ## Colleague demo setup: Windows and Codex Desktop
 
 The project owner gives each colleague one private link shaped like
-`https://black-vector.com/sensai/invite#...`. Send that link to Codex with one request: "Install
-Sensai from this invitation." Codex reads the fixed invitation page and this repository, downloads
+`https://black-vector.com/sensai/invite#...`. Send that link to Codex with one request:
+
+> Установи Sensai https://black-vector.com/sensai/invite#...
+
+This single request authorizes the installing agent to install Sensai and continue to Sensai's
+first response. Codex reads the fixed invitation page and this repository, downloads
 [`bootstrap/install-sensai.ps1`](bootstrap/install-sensai.ps1) together with
 [`bootstrap/MANIFEST.sha256`](bootstrap/MANIFEST.sha256), verifies that the script's SHA-256
 checksum matches the manifest, and runs the helper with the original invitation URL. The checksum
@@ -26,16 +30,20 @@ This bootstrap currently supports Windows Codex Desktop only and relies on the c
 Windows registry permissions to keep the stored value unavailable to other Windows accounts. Apps
 running as the same Windows user can still read that user's environment.
 
-Codex loads newly installed plugin instructions and tools in a fresh chat. After the installation
-finishes, start a new chat with Codex. A full application restart is normally unnecessary; use it
-only if Sensai does not appear in the new chat. The installation conversation cannot load a plugin
-that did not exist when that conversation started. In the fresh chat, use a natural request such as:
+Codex loads newly installed plugin instructions and tools only in a fresh chat. The installation
+conversation cannot load a plugin that did not exist when that conversation started. After the
+bootstrap succeeds, it returns an explicit continuation contract to the installing agent. On Codex
+Desktop, when the agent has the supported ability to create a new task, it creates one with
+`Continue Sensai setup` as the initial prompt and surfaces it to the colleague. The colleague does
+not type a second setup phrase. In that fresh chat the plugin immediately contacts Sensai, relays
+its introduction, and asks what the colleague does for work and which one to five programs or
+websites they use most often.
 
-> Let's get started with Sensai.
-
-The agent contacts Sensai, relays its introduction, and asks what the colleague does for work and
-which one to five programs or websites they use most often. The colleague does not need to enter
-plugin commands, handle credentials, or describe a scenario idea in this second chat.
+If a particular Codex host does not expose a supported way for an agent to create a new chat, the
+agent explains that platform limitation and asks the colleague to start one and enter
+`Continue Sensai setup`. A full application restart is not part of the normal flow; use it only if
+Sensai is still unavailable in a fresh chat. Codex may also require the person to approve running
+the reviewed bootstrap. The plugin does not bypass that security boundary.
 
 If installation fails before Sensai starts, the agent may send one short error description to the
 public `POST https://black-vector.com/sensai/install-help/search` endpoint. It must not include

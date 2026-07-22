@@ -39,6 +39,7 @@ def test_public_bootstrap_manifest_matches_exact_script() -> None:
 
 def test_public_readme_has_only_one_link_agent_driven_setup() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    normalized_readme = " ".join(readme.lower().split())
 
     assert "https://black-vector.com/sensai/invite#" in readme
     assert "bootstrap/install-sensai.ps1" in readme
@@ -49,8 +50,19 @@ def test_public_readme_has_only_one_link_agent_driven_setup() -> None:
     assert "bootstrap/MANIFEST.sha256" in readme
     assert "one-time" in readme.lower()
     assert "cannot be used again" in readme.lower()
-    assert "A full application restart is normally unnecessary" in readme
-    assert "new chat" in readme
+    assert "A full application restart is not part of the normal flow" in readme
+    assert "the colleague does not type a second setup phrase" in normalized_readme
+
+
+def test_bootstrap_tells_the_installing_agent_to_continue_in_a_fresh_chat() -> None:
+    script = BOOTSTRAP.read_text(encoding="utf-8")
+
+    assert "SENSAI_AGENT_CONTINUATION_BEGIN" in script
+    assert "continue the user's original request without asking for another setup message" in script
+    assert "create a fresh chat with this exact initial prompt: Continue Sensai setup" in script
+    assert "Do not ask the user to type that prompt." in script
+    assert "A full Codex restart is not normally needed." in script
+    assert "Fully restart Codex" not in script
 
 
 def test_real_windows_helper_keeps_access_token_out_of_output(tmp_path: Path) -> None:
@@ -119,6 +131,9 @@ def test_real_windows_helper_keeps_access_token_out_of_output(tmp_path: Path) ->
         "Preparing Sensai access"
     )
     assert "Sensai is installed" in completed.stdout
+    assert "SENSAI_AGENT_CONTINUATION_BEGIN" in completed.stdout
+    assert "Continue Sensai setup" in completed.stdout
+    assert "Do not ask the user to type that prompt." in completed.stdout
 
 
 def test_failed_install_does_not_redeem_invitation(tmp_path: Path) -> None:

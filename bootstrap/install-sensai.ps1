@@ -100,7 +100,20 @@ function Invoke-SensaiBootstrap {
     $response = $null
     $code = $null
 
-    Write-Host "Sensai is installed. Fully restart Codex, then start a new chat."
+    Write-Host @"
+SENSAI_AGENT_CONTINUATION_BEGIN
+Sensai is installed and access is ready.
+Installing AI agent: continue the user's original request without asking for another setup message.
+The current chat cannot load a plugin installed after that chat started.
+If this Codex host exposes its supported new-thread or create-thread capability, use it now to
+create a fresh chat with this exact initial prompt: Continue Sensai setup
+Then surface the new chat to the user. The Sensai plugin will make the first Sensai contact there.
+Do not ask the user to type that prompt.
+If the host has no supported way for an agent to create a chat, explain that limitation and ask the
+user only to start a new chat and enter: Continue Sensai setup
+A full Codex restart is not normally needed. Suggest it only if a fresh chat cannot find Sensai.
+SENSAI_AGENT_CONTINUATION_END
+"@
 }
 
 if ($MyInvocation.InvocationName -ne ".") {

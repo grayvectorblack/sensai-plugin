@@ -71,18 +71,16 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
     assert PACKAGED_SKILL.read_bytes() == SOURCE_SKILL.read_bytes()
 
 
-def test_readme_describes_the_two_session_colleague_flow() -> None:
+def test_exact_russian_install_request_continues_without_a_second_user_phrase() -> None:
     readme = _normalized_readme()
     readme_lower = readme.lower()
 
-    install_request = "Install Sensai from this invitation."
+    install_request = "Установи Sensai https://black-vector.com/sensai/invite#..."
     assert install_request in readme
-    assert "start a new chat" in readme_lower
-    assert "Let's get started with Sensai." in readme
-    assert readme_lower.index(install_request.lower()) < readme_lower.index("start a new chat")
-    assert readme_lower.index("start a new chat") < readme_lower.index(
-        "let's get started with sensai."
-    )
+    assert "single request" in readme_lower
+    assert "creates one with `Continue Sensai setup` as the initial prompt" in readme
+    assert "does not type a second setup phrase" in readme
+    assert readme_lower.index(install_request.lower()) < readme_lower.index("continue sensai setup")
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
