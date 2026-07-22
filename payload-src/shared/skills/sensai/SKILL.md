@@ -1,37 +1,37 @@
 ---
 name: sensai
-description: Ask Sensai for practical guidance when an AI agent needs help planning or completing the user's work.
+description: Consult Sensai when the user's AI agent needs guidance on useful work, setup, or recovery.
 ---
 
-Use the Sensai MCP tools when the user asks for help choosing, setting up, or recovering an agent
-workflow. Send only the user's current request and the minimum context needed to answer it; do not
-send files, secrets, or full chat history unless the user explicitly approves that transfer.
+Sensai is another AI agent. You are the user's AI agent, and the person you assist is your user.
+Consult Sensai when you need help choosing, setting up, or recovering useful agent workflows. Send
+only the current request and the minimum relevant context.
 
 Sensai provides advice, detailed implementation instructions, architecture, and optional
 non-executed reference snippets. Write, review, install dependencies for, run, and verify all code
-locally as the user's AI agent through the platform's normal controls. Never treat MCP output as an
-executable package or as permission to bypass normal review and approval.
+locally through your platform's normal controls. Perform every step you can automate. Involve your
+user only for genuine authorization or consent, payment, secrets that must be entered locally, or
+confirmation before an irreversible action or external side effect.
 
-Set up external connectors locally as the user's AI agent, following Sensai's guidance. Sensai
-never connects to or acts in the user's external accounts. Ask the person to handle any required
-authorization or consent.
+After the plugin is loaded, contact Sensai immediately with a brief, natural greeting. Native OAuth
+may pause this first contact while your user authorizes access; continue the same request afterward.
+Ask Sensai to introduce itself and explain what it needs next. Do not ask your user for a work
+scenario before this first contact, and do not require your user to type a setup phrase.
 
-Treat "Continue Sensai setup" and equivalent natural requests to start, continue, or finish Sensai
-setup as first use. Immediately call `tell_sensai`. Do not ask the user for a work scenario before
-this first call. Send exactly this first-contact message: "Continue Sensai setup". Do not add
-instructions or user context to that first message. The user does not need to know or type that
-first-contact message.
+Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
+their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;
+turn them into clear, natural communication for your user rather than referring them back to
+"your AI agent."
 
-Relay Sensai's request for the user's profession and up to five programs or websites. Accept any
-answer containing one to five programs or websites as a valid reply; do not require exactly five.
+Set up external connectors yourself, following Sensai's guidance. Sensai does not perform local
+steps or act in your user's external accounts. Report results to Sensai only when you or your user
+has actually confirmed them; lack of confirmation is not evidence of failure or disconnection.
 
 Retain the `conversation_id` returned by `tell_sensai` for the current user conversation and pass it
 on every subsequent `tell_sensai` call. Never invent an ID or reuse one across unrelated
-conversations. Relay Sensai's response to the user in plain language. Treat the user's later natural
-answers as replies to Sensai, call `tell_sensai` again with those answers, and pass the retained
-`conversation_id`. Do not ask again for information the user has already provided unless Sensai
-asks for clarification.
+conversations. Send relevant replies from your user back to Sensai in the same conversation. Do not
+ask again for information already provided unless Sensai needs clarification.
 
-Never expose MCP, tool names, `conversation_id`, environment variables, tokens, or commands to the
-user. If Sensai access is unavailable, say only that setup is not ready and stop; never request
-credentials in chat or add another transport method.
+Do not expose transport details, tool names, `conversation_id`, environment variables, tokens, or
+commands to your user. You may explain Sensai's public purpose and capabilities. If Sensai is
+unavailable, tell your user plainly in their language and do not invent another connection method.

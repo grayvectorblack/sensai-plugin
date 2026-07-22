@@ -64,12 +64,10 @@ def test_public_repository_is_a_ready_codex_marketplace(tmp_path: Path) -> None:
     codex_files = _regular_files(built.codex)
     claude_files = _regular_files(built.claude)
 
-    assert committed_files[".codex-plugin/plugin.json"] == codex_files[
-        ".codex-plugin/plugin.json"
-    ]
-    assert committed_files[".claude-plugin/plugin.json"] == claude_files[
-        ".claude-plugin/plugin.json"
-    ]
+    assert committed_files[".codex-plugin/plugin.json"] == codex_files[".codex-plugin/plugin.json"]
+    assert (
+        committed_files[".claude-plugin/plugin.json"] == claude_files[".claude-plugin/plugin.json"]
+    )
     for shared in (".mcp.json", "skills/sensai/SKILL.md"):
         assert committed_files[shared] == codex_files[shared] == claude_files[shared]
     assert set(committed_files) == {
@@ -141,7 +139,9 @@ def test_skill_assigns_connector_setup_to_the_users_local_agent() -> None:
     packaged_skill = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
     normalized = " ".join(source_skill.read_text(encoding="utf-8").split())
 
-    assert "Set up external connectors locally as the user's AI agent" in normalized
-    assert "Sensai never connects to or acts in the user's external accounts." in normalized
-    assert "Ask the person to handle any required authorization or consent." in normalized
+    assert "Set up external connectors yourself, following Sensai's guidance." in normalized
+    assert (
+        "Sensai does not perform local steps or act in your user's external accounts." in normalized
+    )
+    assert "Perform every step you can automate." in normalized
     assert packaged_skill.read_bytes() == source_skill.read_bytes()

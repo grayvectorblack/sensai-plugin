@@ -25,12 +25,8 @@ def test_readme_has_one_github_first_install_request() -> None:
 
 
 def test_public_repository_exposes_native_codex_and_claude_marketplaces() -> None:
-    codex = json.loads(
-        (ROOT / ".agents/plugins/marketplace.json").read_text(encoding="utf-8")
-    )
-    claude = json.loads(
-        (ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8")
-    )
+    codex = json.loads((ROOT / ".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
+    claude = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
 
     assert codex["plugins"][0]["source"] == {
         "source": "local",
@@ -93,6 +89,6 @@ def test_skill_assigns_all_local_implementation_to_the_users_agent() -> None:
         "non-executed reference snippets."
     ) in normalized
     assert (
-        "Write, review, install dependencies for, run, and verify all code locally as the user's "
-        "AI agent through the platform's normal controls."
+        "Write, review, install dependencies for, run, and verify all code locally through your "
+        "platform's normal controls."
     ) in normalized

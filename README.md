@@ -1,8 +1,8 @@
 # Sensai Plugin
 
-Sensai advises a user's AI agent. It helps the agent choose useful work scenarios, understand how
-to implement them, install connectors locally, and recover from setup problems. Sensai does not
-connect to external accounts or run code on the user's computer.
+Sensai is an AI agent that advises another AI agent. It helps the user's agent choose useful work
+scenarios, implement them, set up connectors locally, and recover from setup problems. Sensai does
+not connect to external accounts or run code on the user's computer.
 
 Public source: <https://github.com/grayvectorblack/sensai-plugin>
 
@@ -24,17 +24,19 @@ Give your AI agent exactly this request:
 Установи Sensai https://github.com/grayvectorblack/sensai-plugin
 ```
 
-The agent must read this README, identify whether it is running in Codex or Claude Code, and use
-that platform's native plugin commands. No downloaded installer script is required.
+After this one request, the user's agent reads this README, identifies whether it is running in
+Codex or Claude Code, and performs every remaining automatable step with that platform's native
+plugin commands. The person may still need to approve installation and complete native OAuth, but
+does not need to enter another Sensai command. No downloaded installer script is required.
 
 ### Codex
 
 The agent adds this GitHub repository as a marketplace and installs `sensai@sensai` using
 `codex plugin marketplace add` and `codex plugin add`. Codex loads a newly installed plugin in a
-fresh task. The installing agent should create that task itself with `Continue Sensai setup` as its
-initial message when the host exposes task creation. A plugin cannot hot-load itself into the task
-that installed it. If the host does not let the installing agent create a task, it must state that
-one fresh-task action remains instead of claiming that setup continued automatically.
+fresh task. When the host exposes task creation, the installing agent creates that task itself and
+starts a natural first conversation with Sensai. A plugin cannot hot-load itself into the task that
+installed it. If the host does not let the installing agent create a task, it must state that one
+fresh-task action remains instead of claiming that setup continued automatically.
 
 ### Claude Code
 
@@ -60,9 +62,10 @@ refresh its own credential. **That server-side OAuth flow is not deployed yet.**
 deployed, the first Sensai MCP request must fail clearly as unavailable; the plugin must not claim
 that authorization succeeded and must not fall back to a manually stored token.
 
-After OAuth is deployed and a newly installed plugin is loaded, the skill calls `tell_sensai`,
-relays Sensai's introduction, and asks what the person does for work and which one to five programs
-or websites they use most often.
+After OAuth is deployed and a newly installed plugin is loaded, the user's agent greets Sensai
+naturally. Sensai introduces itself and guides the agent through the next useful questions. The two
+agents may communicate in concise English to save tokens; the user's agent speaks to the person in
+the person's language.
 
 ## Development
 
