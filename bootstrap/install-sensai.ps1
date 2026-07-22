@@ -59,7 +59,7 @@ function Invoke-SensaiBootstrap {
         $InstallPlugin = {
             Remove-Item Env:SENSAI_INVITE_TOKEN -ErrorAction SilentlyContinue
             $codex = Get-Command codex -ErrorAction Stop
-            $null = & $codex.Source plugin marketplace add grayskripko/sensai-plugin --json 2>&1
+            $null = & $codex.Source plugin marketplace add grayvectorblack/sensai-plugin --json 2>&1
             if ($LASTEXITCODE -ne 0) {
                 throw "Sensai marketplace installation failed."
             }

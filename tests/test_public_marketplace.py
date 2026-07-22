@@ -6,7 +6,7 @@ from pathlib import Path
 from sensai_plugin.package_builder import build_packages
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_SOURCE_URL = "https://github.com/grayskripko/sensai-plugin"
+PUBLIC_SOURCE_URL = "https://github.com/grayvectorblack/sensai-plugin"
 
 
 def _regular_files(root: Path) -> dict[str, bytes]:
@@ -99,3 +99,14 @@ def test_public_metadata_states_the_advisory_product_boundary(tmp_path: Path) ->
     assert claude_manifest["description"] == expected
     assert "connects external services" not in json.dumps(codex_manifest).lower()
     assert "acts in user accounts" not in json.dumps(claude_manifest).lower()
+
+
+def test_skill_assigns_connector_setup_to_the_users_local_agent() -> None:
+    source_skill = REPOSITORY_ROOT / "payload-src/shared/skills/sensai/SKILL.md"
+    packaged_skill = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
+    normalized = " ".join(source_skill.read_text(encoding="utf-8").split())
+
+    assert "Set up external connectors locally as the user's AI agent" in normalized
+    assert "Sensai never connects to or acts in the user's external accounts." in normalized
+    assert "Ask the person to handle any required authorization or consent." in normalized
+    assert packaged_skill.read_bytes() == source_skill.read_bytes()

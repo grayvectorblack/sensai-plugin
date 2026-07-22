@@ -4,9 +4,15 @@ Sensai advises the user's Codex or Claude agent, provides installation and probl
 instructions, and may provide transparent reference material. Sensai does not connect external
 services or act in user accounts.
 
+Public source: <https://github.com/grayvectorblack/sensai-plugin>
+
 > **Privacy:** Sensai receives only the text that your AI agent deliberately sends to Sensai;
 > nothing is collected secretly. The opening questions ask about your profession and commonly used
 > programs so Sensai can give relevant guidance.
+
+External connectors are set up locally by the user's AI agent following Sensai's guidance. Sensai
+never connects to or acts in the user's external accounts, and the person handles every required
+authorization or consent step.
 
 After the user selects a vetted scenario, their AI agent may apply a reviewed package through
 Codex's normal file and command approval. The first demo package turns a sample marketing CSV into

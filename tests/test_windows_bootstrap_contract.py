@@ -25,7 +25,8 @@ def test_windows_bootstrap_redeems_fragment_without_printing_bearer() -> None:
     assert "SENSAI_BOOTSTRAP_CREDENTIAL_FILE" not in script
     assert "$env:SENSAI_INVITE_TOKEN =" not in script
     assert "Remove-Item Env:SENSAI_INVITE_TOKEN" in script
-    assert "codex plugin marketplace add grayskripko/sensai-plugin" not in script
+    assert "marketplace add grayvectorblack/sensai-plugin" in script
+    assert "grayskripko" + "/sensai-plugin" not in script
     assert "codex plugin add sensai@sensai" not in script
 
 

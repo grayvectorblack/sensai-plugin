@@ -7,6 +7,10 @@ Use the Sensai MCP tools when the user asks for help choosing, setting up, or re
 agent workflow. Send only the user's current request and the minimum context needed to answer it;
 do not send files, secrets, or full chat history unless the user explicitly approves that transfer.
 
+Set up external connectors locally as the user's AI agent, following Sensai's guidance. Sensai
+never connects to or acts in the user's external accounts. Ask the person to handle any required
+authorization or consent.
+
 Treat "Continue Sensai setup" and equivalent natural requests to start, continue, or finish Sensai
 setup as first use. Immediately call `tell_sensai`. Do not ask the user for a work scenario
 before this first call. Send exactly this first-contact message: "Continue Sensai setup". Do not

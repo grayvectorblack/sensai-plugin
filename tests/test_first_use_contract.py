@@ -103,3 +103,6 @@ def test_readme_prominently_explains_deliberate_text_sharing_and_opening_questio
         "can give relevant guidance."
     ) in introduction
     assert "Sensai does not connect external services or act in user accounts." in introduction
+    assert "https://github.com/grayvectorblack/sensai-plugin" in introduction
+    assert "External connectors are set up locally by the user's AI agent" in introduction
+    assert "the person handles every required authorization or consent step" in introduction
