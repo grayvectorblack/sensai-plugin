@@ -13,8 +13,9 @@ natural first conversation with Sensai. The person is not asked to type another 
 ## Platform boundary
 
 Codex loads a newly installed plugin in a fresh task. The installing agent creates that task and
-greets Sensai naturally when its host exposes task creation. Claude Code reloads newly installed
-plugins with `/reload-plugins` and can continue in the current session.
+greets Sensai naturally when its host exposes task creation. If the running Claude Code session
+does not expose the newly installed plugin, the agent starts a fresh session when its host permits
+that; otherwise it asks the person only to restart Claude Code.
 
 The platforms may still require the person to approve plugin installation and, once server OAuth is
 available, authorize Sensai in a browser. Those are platform security boundaries, not additional
@@ -26,7 +27,7 @@ agent, not the person directly.
 
 ## Authorization boundary
 
-The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint without a
-static token. Native MCP OAuth is expected to begin from the resulting unauthenticated response.
-Server OAuth is not deployed yet, so current first contact fails clearly instead of using a hidden
-legacy credential path.
+The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint and uses
+the server's standard OAuth metadata. The user's agent starts its host's native MCP sign-in when
+needed, the person completes the browser login, and the agent retries the original natural greeting.
+If OAuth is unavailable, first contact fails clearly instead of requesting a copied credential.

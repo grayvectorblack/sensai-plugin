@@ -19,6 +19,11 @@ while your user authorizes access; continue the same request afterward. Do not u
 phrase, ask your user for a work scenario before this call, or require your user to type another
 command.
 
+If the first call requires authorization, use your host's native MCP sign-in for the installed
+Sensai server, let your user complete only the browser login and consent screen, then retry the same
+greeting. Never ask your user to copy an authorization URL, code, or credential into chat or local
+configuration.
+
 Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
 their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;
 turn them into clear, natural communication for your user rather than referring them back to

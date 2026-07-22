@@ -31,6 +31,18 @@ def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
     assert "Native OAuth may pause this first call" in skill
 
 
+def test_users_agent_handles_native_oauth_without_manual_credential_copying() -> None:
+    skill = _normalized_skill()
+
+    assert "use your host's native MCP sign-in for the installed Sensai server" in skill
+    assert "complete only the browser login and consent screen" in skill
+    assert "then retry the same greeting" in skill
+    assert (
+        "Never ask your user to copy an authorization URL, code, or credential into chat or local "
+        "configuration."
+    ) in skill
+
+
 def test_first_use_requires_no_second_human_command() -> None:
     skill = _normalized_skill()
 
@@ -78,9 +90,9 @@ def test_exact_russian_install_request_uses_host_continuation_without_overclaimi
     assert install_request in readme
     assert "exactly this request" in readme_lower
     assert "starts a natural first conversation with Sensai" in readme
-    assert "A plugin cannot hot-load itself into the task that installed it." in readme
-    assert "one fresh-task action remains" in readme
-    assert "one remaining reload action" in readme
+    assert "never claims the current task hot-loaded the plugin" in readme
+    assert "opening one fresh task is the only remaining action" in readme
+    assert "restarting Claude Code is the only remaining action" in readme
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
@@ -90,23 +102,46 @@ def test_readme_does_not_start_with_a_marketing_routine() -> None:
     assert "Help me choose one routine" not in readme
 
 
-def test_readme_prominently_explains_deliberate_text_sharing_and_opening_questions() -> None:
+def test_readme_has_a_short_precise_privacy_boundary() -> None:
     readme = README.read_text(encoding="utf-8")
     introduction = " ".join(readme[:1600].replace("> ", "").split())
 
     assert (
-        "Sensai receives only text that the user's AI agent deliberately sends through the "
-        "Sensai MCP server. Nothing is collected from local files, accounts, or chat history "
-        "implicitly."
-    ) in introduction
-    assert (
-        "Sensai's opening questions ask about the person's profession and commonly used programs "
-        "so its advice can be relevant."
-    ) in introduction
+        "Sensai receives only text that the user's AI agent explicitly sends to it." in introduction
+    )
     assert "Sensai does not connect to external accounts or run code" in introduction
     assert "https://github.com/grayvectorblack/sensai-plugin" in introduction
     assert "Connector setup also happens locally." in introduction
     assert "The person completes any authorization or consent screen." in introduction
+
+
+def test_public_runtime_contains_no_legacy_install_or_manual_auth_flow() -> None:
+    forbidden = (
+        "black-vector.com/sensai/invite",
+        "continue sensai setup",
+        "one-time code",
+        "invitation code",
+        "bootstrap runner",
+        "install-sensai.ps1",
+        "package_runner",
+        "sensai_token",
+        "bearer_token_env_var",
+        "paste the token",
+        "copy the token",
+    )
+    roots = (
+        README,
+        REPOSITORY_ROOT / "payload-src",
+        REPOSITORY_ROOT / "plugins",
+        REPOSITORY_ROOT / ".agents",
+        REPOSITORY_ROOT / ".claude-plugin",
+    )
+
+    for root in roots:
+        paths = [root] if root.is_file() else [path for path in root.rglob("*") if path.is_file()]
+        for path in paths:
+            content = path.read_text(encoding="utf-8").lower()
+            assert not any(fragment in content for fragment in forbidden), path
 
 
 def test_documented_release_build_command_matches_and_executes_the_cli(tmp_path: Path) -> None:

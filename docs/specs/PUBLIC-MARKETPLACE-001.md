@@ -19,11 +19,11 @@ one-time code, or manually stored bearer token is part of installation.
 - `scripts/sync_public_marketplace.py` regenerates all three public paths, and `--check` fails when
   committed output is missing or stale.
 
-## Current server dependency
+## Server dependency
 
-The plugin is prepared for native OAuth discovery, but it must not claim authorization works until
-the MCP server publishes the required OAuth metadata and authorization endpoints. Until then, an
-unauthenticated request fails clearly.
+The plugin uses native OAuth discovery, but its documentation does not claim that the production
+switch has happened. Publication is gated on the MCP server exposing the required OAuth metadata
+and authorization endpoints. Without them, an unauthenticated request fails clearly.
 
 ## Evidence
 

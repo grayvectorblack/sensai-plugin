@@ -6,10 +6,7 @@ not connect to external accounts or run code on the user's computer.
 
 Public source: <https://github.com/grayvectorblack/sensai-plugin>
 
-> **Privacy:** Sensai receives only text that the user's AI agent deliberately sends through the
-> Sensai MCP server. Nothing is collected from local files, accounts, or chat history implicitly.
-> Sensai's opening questions ask about the person's profession and commonly used programs so its
-> advice can be relevant.
+> **Privacy:** Sensai receives only text that the user's AI agent explicitly sends to it.
 
 Sensai may return advice, architecture, detailed implementation instructions, and non-executed
 reference snippets. The user's own AI agent writes and reviews any resulting code, installs its
@@ -31,19 +28,19 @@ does not need to enter another Sensai command. No downloaded installer script is
 
 ### Codex
 
-The agent adds this GitHub repository as a marketplace and installs `sensai@sensai` using
-`codex plugin marketplace add` and `codex plugin add`. Codex loads a newly installed plugin in a
-fresh task. When the host exposes task creation, the installing agent creates that task itself and
-starts a natural first conversation with Sensai. A plugin cannot hot-load itself into the task that
-installed it. If the host does not let the installing agent create a task, it must state that one
-fresh-task action remains instead of claiming that setup continued automatically.
+The agent adds `grayvectorblack/sensai-plugin` as a marketplace and installs `sensai@sensai` using
+`codex plugin marketplace add` and `codex plugin add`. Codex loads the installed plugin in a fresh
+task. When its host exposes task creation, the installing agent creates that task itself and starts
+a natural first conversation with Sensai. Otherwise, it tells the person that opening one fresh
+task is the only remaining action; it never claims the current task hot-loaded the plugin.
 
 ### Claude Code
 
-The agent adds this GitHub repository with `claude plugin marketplace add`, installs
-`sensai@sensai` at user scope with `claude plugin install`, and reloads plugins through Claude's
-native mechanism. If that mechanism is not exposed to the installing agent, it must state the one
-remaining reload action instead of claiming that Sensai is already available.
+The agent adds `grayvectorblack/sensai-plugin` with `claude plugin marketplace add` and installs
+`sensai@sensai` at user scope with `claude plugin install`. If the running Claude Code session does
+not expose the newly installed plugin, the agent starts a fresh session when its host permits that.
+Otherwise, it tells the person that restarting Claude Code is the only remaining action; it never
+claims that Sensai is already loaded.
 
 Both public marketplace layouts are generated from the same reviewed source under `payload-src/`:
 
@@ -51,16 +48,16 @@ Both public marketplace layouts are generated from the same reviewed source unde
 - Claude Code: `.claude-plugin/marketplace.json`
 - shared plugin payload: `plugins/sensai/`
 
-## MCP authorization status
+## MCP authorization
 
 The plugin configures one remote MCP server at `https://black-vector.com/sensai/mcp`. It contains
-no static access token, invitation code, authorization header, or environment-token fallback.
+no credential or custom authorization helper.
 
-The intended authorization flow is native MCP OAuth. The first unauthenticated connection causes
-the MCP client to discover the server's OAuth metadata, open the authorization page, and store and
-refresh its own credential. **That server-side OAuth flow is not deployed yet.** Until it is
-deployed, the first Sensai MCP request must fail clearly as unavailable; the plugin must not claim
-that authorization succeeded and must not fall back to a manually stored token.
+When the server-side OAuth switch is live, the first unauthenticated connection lets the MCP client
+discover the standard OAuth metadata and use its native sign-in flow. The user's agent starts that
+flow when needed; the person only completes the browser login and consent screen. The client stores
+and refreshes its own credential. If OAuth is unavailable, the request must fail clearly instead of
+asking the person to copy credentials into chat or configuration.
 
 After OAuth is deployed and a newly installed plugin is loaded, the user's agent greets Sensai
 naturally. Sensai introduces itself and guides the agent through the next useful questions. The two
