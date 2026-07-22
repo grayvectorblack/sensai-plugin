@@ -88,3 +88,18 @@ def test_readme_does_not_start_with_a_marketing_routine() -> None:
 
     assert "I work in marketing" not in readme
     assert "Help me choose one routine" not in readme
+
+
+def test_readme_prominently_explains_deliberate_text_sharing_and_opening_questions() -> None:
+    readme = README.read_text(encoding="utf-8")
+    introduction = " ".join(readme[:1600].replace("> ", "").split())
+
+    assert (
+        "Sensai receives only the text that your AI agent deliberately sends to Sensai; "
+        "nothing is collected secretly."
+    ) in introduction
+    assert (
+        "The opening questions ask about your profession and commonly used programs so Sensai "
+        "can give relevant guidance."
+    ) in introduction
+    assert "Sensai does not connect external services or act in user accounts." in introduction

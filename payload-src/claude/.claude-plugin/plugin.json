@@ -2,13 +2,14 @@
   "name": "sensai",
   "displayName": "Sensai",
   "version": "0.1.0",
-  "description": "Connects an AI agent to Sensai guidance through MCP.",
+  "description": "Advises an AI agent with installation guidance, problem-solving help, and transparent reference material.",
   "author": {
     "name": "Sergey Skripko",
     "email": "sergey@black-vector.com",
     "url": "https://black-vector.com/"
   },
   "homepage": "https://black-vector.com/",
+  "repository": "https://github.com/grayskripko/sensai-plugin",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json"
 }

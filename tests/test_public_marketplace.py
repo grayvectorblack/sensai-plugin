@@ -6,6 +6,7 @@ from pathlib import Path
 from sensai_plugin.package_builder import build_packages
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+PUBLIC_SOURCE_URL = "https://github.com/grayskripko/sensai-plugin"
 
 
 def _regular_files(root: Path) -> dict[str, bytes]:
@@ -57,3 +58,44 @@ def test_skill_requires_conversation_id_continuity() -> None:
     normalized_skill = " ".join(source_skill.read_text(encoding="utf-8").split())
     assert required_rule in normalized_skill
     assert packaged_skill.read_bytes() == source_skill.read_bytes()
+
+
+def test_both_platform_manifests_expose_the_public_source_repository(tmp_path: Path) -> None:
+    built = build_packages(
+        source_root=REPOSITORY_ROOT / "payload-src",
+        output_root=tmp_path / "packages",
+    )
+
+    codex_manifest = json.loads(
+        (built.codex / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    claude_manifest = json.loads(
+        (built.claude / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+
+    assert codex_manifest["repository"] == PUBLIC_SOURCE_URL
+    assert claude_manifest["repository"] == PUBLIC_SOURCE_URL
+    assert codex_manifest["homepage"] == "https://black-vector.com/"
+    assert claude_manifest["homepage"] == "https://black-vector.com/"
+
+
+def test_public_metadata_states_the_advisory_product_boundary(tmp_path: Path) -> None:
+    built = build_packages(
+        source_root=REPOSITORY_ROOT / "payload-src",
+        output_root=tmp_path / "packages",
+    )
+    codex_manifest = json.loads(
+        (built.codex / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    claude_manifest = json.loads(
+        (built.claude / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+
+    expected = (
+        "Advises an AI agent with installation guidance, problem-solving help, and transparent "
+        "reference material."
+    )
+    assert codex_manifest["description"] == expected
+    assert claude_manifest["description"] == expected
+    assert "connects external services" not in json.dumps(codex_manifest).lower()
+    assert "acts in user accounts" not in json.dumps(claude_manifest).lower()

@@ -1,11 +1,16 @@
 # Sensai Plugin
 
-Sensai connects Codex or Claude to a remote adviser that helps an AI agent understand the user's
-work, compare useful scenarios, and prepare a practical first workflow. After the user selects a
-vetted scenario, the plugin may create its declared local files and run its generator plus an
-independent verification through Codex's normal file and command approval. The first demo package
-turns a sample marketing CSV into a verified, self-contained weekly HTML report. It does not
-connect to Gmail, Google Sheets, or other external services on the user's behalf.
+Sensai advises the user's Codex or Claude agent, provides installation and problem-solving
+instructions, and may provide transparent reference material. Sensai does not connect external
+services or act in user accounts.
+
+> **Privacy:** Sensai receives only the text that your AI agent deliberately sends to Sensai;
+> nothing is collected secretly. The opening questions ask about your profession and commonly used
+> programs so Sensai can give relevant guidance.
+
+After the user selects a vetted scenario, their AI agent may apply a reviewed package through
+Codex's normal file and command approval. The first demo package turns a sample marketing CSV into
+a verified, self-contained weekly HTML report.
 
 ## Colleague demo setup: Windows and Codex Desktop
 
