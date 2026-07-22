@@ -71,7 +71,7 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
     assert PACKAGED_SKILL.read_bytes() == SOURCE_SKILL.read_bytes()
 
 
-def test_exact_russian_install_request_continues_without_a_second_user_phrase() -> None:
+def test_exact_russian_install_request_uses_host_continuation_without_overclaiming() -> None:
     readme = _normalized_readme()
     readme_lower = readme.lower()
 
@@ -79,7 +79,9 @@ def test_exact_russian_install_request_continues_without_a_second_user_phrase() 
     assert install_request in readme
     assert "exactly this request" in readme_lower
     assert "create that task itself with `Continue Sensai setup` as its initial message" in readme
-    assert "should not have to type a second setup request" in readme
+    assert "A plugin cannot hot-load itself into the task that installed it." in readme
+    assert "one fresh-task action remains" in readme
+    assert "one remaining reload action" in readme
     assert readme_lower.index(install_request.lower()) < readme_lower.index("continue sensai setup")
 
 

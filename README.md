@@ -32,14 +32,16 @@ that platform's native plugin commands. No downloaded installer script is requir
 The agent adds this GitHub repository as a marketplace and installs `sensai@sensai` using
 `codex plugin marketplace add` and `codex plugin add`. Codex loads a newly installed plugin in a
 fresh task. The installing agent should create that task itself with `Continue Sensai setup` as its
-initial message when the host exposes task creation. The person should not have to type a second
-setup request.
+initial message when the host exposes task creation. A plugin cannot hot-load itself into the task
+that installed it. If the host does not let the installing agent create a task, it must state that
+one fresh-task action remains instead of claiming that setup continued automatically.
 
 ### Claude Code
 
 The agent adds this GitHub repository with `claude plugin marketplace add`, installs
-`sensai@sensai` at user scope with `claude plugin install`, and runs `/reload-plugins`. The agent
-then continues with Sensai without asking the person for another setup request.
+`sensai@sensai` at user scope with `claude plugin install`, and reloads plugins through Claude's
+native mechanism. If that mechanism is not exposed to the installing agent, it must state the one
+remaining reload action instead of claiming that Sensai is already available.
 
 Both public marketplace layouts are generated from the same reviewed source under `payload-src/`:
 
