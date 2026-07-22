@@ -2,34 +2,27 @@
 
 ## User journey
 
-The supported Codex Desktop journey starts with one natural user request:
+The supported journey starts with exactly one natural request:
 
-> Установи Sensai <invitation URL>
+> Установи Sensai https://github.com/grayvectorblack/sensai-plugin
 
-That request authorizes the installing AI agent to install Sensai and continue through the first
-Sensai contact. The agent must not ask the person to type a second setup phrase.
+The installing agent reads the public README, detects Codex versus Claude Code, installs through the
+platform's native plugin commands, loads the plugin in the required fresh context, and continues to
+Sensai's first contact. The person is not asked to type another setup phrase.
 
 ## Platform boundary
 
-Codex makes newly installed plugin skills and MCP tools available only in a new chat. The current
-installation chat therefore cannot call `tell_sensai` after installing the plugin. A full Codex
-restart is not part of the normal flow.
+Codex loads a newly installed plugin in a fresh task. The installing agent creates that task with
+`Continue Sensai setup` when its host exposes task creation. Claude Code reloads newly installed
+plugins with `/reload-plugins` and can continue in the current session.
 
-After a successful install, the bootstrap prints an agent continuation contract. When Codex exposes
-its supported new-thread capability, the installing agent must create a fresh chat with
-`Continue Sensai setup` as its initial prompt and surface that chat to the user. The newly loaded
-Sensai skill then immediately calls `tell_sensai` and relays Sensai's first response.
+The platforms may still require the person to approve plugin installation and, once server OAuth is
+available, authorize Sensai in a browser. Those are platform security boundaries, not additional
+Sensai setup commands.
 
-If the current host does not expose a supported new-thread capability, the agent must state the
-actual limitation. It may ask the person to start a new chat and enter `Continue Sensai setup`.
-This fallback is an unavoidable platform action, not the claimed Codex Desktop happy path.
+## Authorization boundary
 
-Codex may still request approval before running the reviewed bootstrap. The flow must not bypass or
-misrepresent that security boundary.
-
-## Preserved guarantees
-
-- Install the plugin before redeeming the one-time invitation.
-- Do not print or pass the issued access token on a command line.
-- Do not redeem an invitation when installation fails.
-- Do not require a full application restart unless a fresh chat still cannot discover Sensai.
+The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint without a
+static token. Native MCP OAuth is expected to begin from the resulting unauthenticated response.
+Server OAuth is not deployed yet, so current first contact fails clearly instead of using a hidden
+legacy credential path.

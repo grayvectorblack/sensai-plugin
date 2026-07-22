@@ -1,0 +1,17 @@
+{
+  "name": "sensai",
+  "owner": {
+    "name": "Black Vector",
+    "email": "sergey@black-vector.com"
+  },
+  "description": "Sensai guidance for AI agents.",
+  "plugins": [
+    {
+      "name": "sensai",
+      "source": "./plugins/sensai",
+      "description": "Practical guidance for an AI agent.",
+      "version": "0.2.0",
+      "category": "productivity"
+    }
+  ]
+}

@@ -37,13 +37,48 @@ def test_public_repository_is_a_ready_codex_marketplace(tmp_path: Path) -> None:
         ],
     }
 
+    claude_marketplace = json.loads(
+        (REPOSITORY_ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8")
+    )
+    assert claude_marketplace == {
+        "name": "sensai",
+        "owner": {"name": "Black Vector", "email": "sergey@black-vector.com"},
+        "description": "Sensai guidance for AI agents.",
+        "plugins": [
+            {
+                "name": "sensai",
+                "source": "./plugins/sensai",
+                "description": "Practical guidance for an AI agent.",
+                "version": "0.2.0",
+                "category": "productivity",
+            }
+        ],
+    }
+
     built = build_packages(
         source_root=REPOSITORY_ROOT / "payload-src",
         output_root=tmp_path / "packages",
     )
     committed = REPOSITORY_ROOT / "plugins" / "sensai"
+    committed_files = _regular_files(committed)
+    codex_files = _regular_files(built.codex)
+    claude_files = _regular_files(built.claude)
 
-    assert _regular_files(committed) == _regular_files(built.codex)
+    assert committed_files[".codex-plugin/plugin.json"] == codex_files[
+        ".codex-plugin/plugin.json"
+    ]
+    assert committed_files[".claude-plugin/plugin.json"] == claude_files[
+        ".claude-plugin/plugin.json"
+    ]
+    for shared in (".mcp.json", "skills/sensai/SKILL.md"):
+        assert committed_files[shared] == codex_files[shared] == claude_files[shared]
+    assert set(committed_files) == {
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+        ".mcp.json",
+        "MANIFEST.sha256",
+        "skills/sensai/SKILL.md",
+    }
 
 
 def test_skill_requires_conversation_id_continuity() -> None:
@@ -75,8 +110,8 @@ def test_both_platform_manifests_expose_the_public_source_repository(tmp_path: P
 
     assert codex_manifest["repository"] == PUBLIC_SOURCE_URL
     assert claude_manifest["repository"] == PUBLIC_SOURCE_URL
-    assert codex_manifest["homepage"] == "https://black-vector.com/"
-    assert claude_manifest["homepage"] == "https://black-vector.com/"
+    assert codex_manifest["homepage"] == PUBLIC_SOURCE_URL
+    assert claude_manifest["homepage"] == PUBLIC_SOURCE_URL
 
 
 def test_public_metadata_states_the_advisory_product_boundary(tmp_path: Path) -> None:

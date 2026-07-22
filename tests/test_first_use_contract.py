@@ -48,8 +48,8 @@ def test_first_use_does_not_require_a_scenario_or_expose_internals() -> None:
 
     assert "Do not ask the user for a work scenario before this first call." in skill
     assert (
-        "Never expose MCP, tool names, `conversation_id`, environment variables, invitation "
-        "tokens, or commands to the user."
+        "Never expose MCP, tool names, `conversation_id`, environment variables, tokens, or "
+        "commands to the user."
     ) in skill
 
 
@@ -75,11 +75,11 @@ def test_exact_russian_install_request_continues_without_a_second_user_phrase() 
     readme = _normalized_readme()
     readme_lower = readme.lower()
 
-    install_request = "Установи Sensai https://black-vector.com/sensai/invite#..."
+    install_request = "Установи Sensai https://github.com/grayvectorblack/sensai-plugin"
     assert install_request in readme
-    assert "single request" in readme_lower
-    assert "creates one with `Continue Sensai setup` as the initial prompt" in readme
-    assert "does not type a second setup phrase" in readme
+    assert "exactly this request" in readme_lower
+    assert "create that task itself with `Continue Sensai setup` as its initial message" in readme
+    assert "should not have to type a second setup request" in readme
     assert readme_lower.index(install_request.lower()) < readme_lower.index("continue sensai setup")
 
 
@@ -95,14 +95,15 @@ def test_readme_prominently_explains_deliberate_text_sharing_and_opening_questio
     introduction = " ".join(readme[:1600].replace("> ", "").split())
 
     assert (
-        "Sensai receives only the text that your AI agent deliberately sends to Sensai; "
-        "nothing is collected secretly."
+        "Sensai receives only text that the user's AI agent deliberately sends through the "
+        "Sensai MCP server. Nothing is collected from local files, accounts, or chat history "
+        "implicitly."
     ) in introduction
     assert (
-        "The opening questions ask about your profession and commonly used programs so Sensai "
-        "can give relevant guidance."
+        "Sensai's opening questions ask about the person's profession and commonly used programs "
+        "so its advice can be relevant."
     ) in introduction
-    assert "Sensai does not connect external services or act in user accounts." in introduction
+    assert "Sensai does not connect to external accounts or run code" in introduction
     assert "https://github.com/grayvectorblack/sensai-plugin" in introduction
-    assert "External connectors are set up locally by the user's AI agent" in introduction
-    assert "the person handles every required authorization or consent step" in introduction
+    assert "Connector setup also happens locally." in introduction
+    assert "The person completes any authorization or consent screen." in introduction

@@ -1,97 +1,82 @@
 # Sensai Plugin
 
-Sensai advises the user's Codex or Claude agent, provides installation and problem-solving
-instructions, and may provide transparent reference material. Sensai does not connect external
-services or act in user accounts.
+Sensai advises a user's AI agent. It helps the agent choose useful work scenarios, understand how
+to implement them, install connectors locally, and recover from setup problems. Sensai does not
+connect to external accounts or run code on the user's computer.
 
 Public source: <https://github.com/grayvectorblack/sensai-plugin>
 
-> **Privacy:** Sensai receives only the text that your AI agent deliberately sends to Sensai;
-> nothing is collected secretly. The opening questions ask about your profession and commonly used
-> programs so Sensai can give relevant guidance.
+> **Privacy:** Sensai receives only text that the user's AI agent deliberately sends through the
+> Sensai MCP server. Nothing is collected from local files, accounts, or chat history implicitly.
+> Sensai's opening questions ask about the person's profession and commonly used programs so its
+> advice can be relevant.
 
-External connectors are set up locally by the user's AI agent following Sensai's guidance. Sensai
-never connects to or acts in the user's external accounts, and the person handles every required
-authorization or consent step.
+Sensai may return advice, architecture, detailed implementation instructions, and non-executed
+reference snippets. The user's own AI agent writes and reviews any resulting code, installs its
+dependencies, runs it, and verifies it locally through the normal controls of Codex or Claude.
+Connector setup also happens locally. The person completes any authorization or consent screen.
 
-After the user selects a vetted scenario, their AI agent may apply a reviewed package through
-Codex's normal file and command approval. The first demo package turns a sample marketing CSV into
-a verified, self-contained weekly HTML report.
+## Install
 
-## Colleague demo setup: Windows and Codex Desktop
+Give your AI agent exactly this request:
 
-The project owner gives each colleague one private link shaped like
-`https://black-vector.com/sensai/invite#...`. Send that link to Codex with one request:
+```text
+Установи Sensai https://github.com/grayvectorblack/sensai-plugin
+```
 
-> Установи Sensai https://black-vector.com/sensai/invite#...
+The agent must read this README, identify whether it is running in Codex or Claude Code, and use
+that platform's native plugin commands. No downloaded installer script is required.
 
-This single request authorizes the installing agent to install Sensai and continue to Sensai's
-first response. Codex reads the fixed invitation page and this repository, downloads
-[`bootstrap/install-sensai.ps1`](bootstrap/install-sensai.ps1) together with
-[`bootstrap/MANIFEST.sha256`](bootstrap/MANIFEST.sha256), verifies that the script's SHA-256
-checksum matches the manifest, and runs the helper with the original invitation URL. The checksum
-identifies the exact reviewed bootstrap file in this public repository.
+### Codex
 
-The helper installs the public marketplace and plugin first. Only after installation succeeds does
-it redeem the one-time code in a request body. The one-time code appears in the original request to
-Codex by design; after successful redemption it cannot be used again. The longer-lived access value
-is never displayed in chat, command output, or a command line. It is written only to the current
-Windows user's persistent environment after all Codex installation child processes have finished.
-This bootstrap currently supports Windows Codex Desktop only and relies on the current user's
-Windows registry permissions to keep the stored value unavailable to other Windows accounts. Apps
-running as the same Windows user can still read that user's environment.
+The agent adds this GitHub repository as a marketplace and installs `sensai@sensai` using
+`codex plugin marketplace add` and `codex plugin add`. Codex loads a newly installed plugin in a
+fresh task. The installing agent should create that task itself with `Continue Sensai setup` as its
+initial message when the host exposes task creation. The person should not have to type a second
+setup request.
 
-Codex loads newly installed plugin instructions and tools only in a fresh chat. The installation
-conversation cannot load a plugin that did not exist when that conversation started. After the
-bootstrap succeeds, it returns an explicit continuation contract to the installing agent. On Codex
-Desktop, when the agent has the supported ability to create a new task, it creates one with
-`Continue Sensai setup` as the initial prompt and surfaces it to the colleague. The colleague does
-not type a second setup phrase. In that fresh chat the plugin immediately contacts Sensai, relays
-its introduction, and asks what the colleague does for work and which one to five programs or
-websites they use most often.
+### Claude Code
 
-If a particular Codex host does not expose a supported way for an agent to create a new chat, the
-agent explains that platform limitation and asks the colleague to start one and enter
-`Continue Sensai setup`. A full application restart is not part of the normal flow; use it only if
-Sensai is still unavailable in a fresh chat. Codex may also require the person to approve running
-the reviewed bootstrap. The plugin does not bypass that security boundary.
+The agent adds this GitHub repository with `claude plugin marketplace add`, installs
+`sensai@sensai` at user scope with `claude plugin install`, and runs `/reload-plugins`. The agent
+then continues with Sensai without asking the person for another setup request.
 
-If installation fails before Sensai starts, the agent may send one short error description to the
-public `POST https://black-vector.com/sensai/install-help/search` endpoint. It must not include
-credentials, files, or chat history.
+Both public marketplace layouts are generated from the same reviewed source under `payload-src/`:
 
-Build and lifecycle contracts are documented under `docs/specs/`.
+- Codex: `.agents/plugins/marketplace.json`
+- Claude Code: `.claude-plugin/marketplace.json`
+- shared plugin payload: `plugins/sensai/`
 
-After changing `payload-src`, regenerate and verify the committed public marketplace with:
+## MCP authorization status
+
+The plugin configures one remote MCP server at `https://black-vector.com/sensai/mcp`. It contains
+no static access token, invitation code, authorization header, or environment-token fallback.
+
+The intended authorization flow is native MCP OAuth. The first unauthenticated connection causes
+the MCP client to discover the server's OAuth metadata, open the authorization page, and store and
+refresh its own credential. **That server-side OAuth flow is not deployed yet.** Until it is
+deployed, the first Sensai MCP request must fail clearly as unavailable; the plugin must not claim
+that authorization succeeded and must not fall back to a manually stored token.
+
+After OAuth is deployed and a newly installed plugin is loaded, the skill calls `tell_sensai`,
+relays Sensai's introduction, and asks what the person does for work and which one to five programs
+or websites they use most often.
+
+## Development
+
+Regenerate and verify both public marketplace layouts after changing `payload-src/`:
 
 ```sh
 uv run python scripts/sync_public_marketplace.py
 uv run python scripts/sync_public_marketplace.py --check
 ```
 
-The repository is also an installable Python package. External E2E drivers can import its public
-acceptance helpers from a fresh clone with `uv run python /path/to/driver.py`; they do not need to
-manually add `src/` to `PYTHONPATH`.
-
-Run the offline Codex package lifecycle acceptance with:
+Build and verify the immutable release artifacts:
 
 ```sh
-./scripts/test_codex_lifecycle.py
+uv run python scripts/build_release.py --output /path/to/release
+uv run python scripts/verify_release.py --bundle /path/to/release
 ```
 
-The command requires `codex` on `PATH`; it redirects `CODEX_HOME`, `HOME`, `TMPDIR`, and XDG roots
-to a temporary profile and does not read credentials or contact the MCP server. It checks that the
-real config and exact lifecycle-test cache sentinel remain unchanged.
-
-Run the isolated Claude Code package lifecycle acceptance with an already-built release:
-
-```sh
-uv run python scripts/test_claude_lifecycle.py --bundle /path/to/release
-```
-
-The command requires `claude` on `PATH`. It uses temporary Claude, secure-storage, home,
-plugin-cache, temp, and XDG roots; validates local marketplace registration, user-scope installation,
-plugin listing, and exact MCP discovery. It verifies the installed plugin payload byte-for-byte against
-the reviewed read-only marketplace payload, then removes the temporary profile and fails if the real
-Claude profile boundary changes. It does not test CLI updates, uninstall, marketplace removal, endpoint
-connectivity, or model behavior.
+The repository also contains isolated lifecycle checks for the installed Codex and Claude CLIs.
+They use temporary profiles and do not authenticate to the production MCP server.

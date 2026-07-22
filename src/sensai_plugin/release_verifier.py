@@ -38,7 +38,6 @@ _TRUSTED_SOURCE_FILES = frozenset(
     {
         "shared/.mcp.json",
         "shared/skills/sensai/SKILL.md",
-        "shared/skills/sensai/scripts/package_runner.py",
         "codex/.codex-plugin/plugin.json",
         "claude/.claude-plugin/plugin.json",
     }
@@ -48,7 +47,6 @@ _TRUSTED_SOURCE_DIRECTORIES = frozenset(
         "shared",
         "shared/skills",
         "shared/skills/sensai",
-        "shared/skills/sensai/scripts",
         "codex",
         "codex/.codex-plugin",
         "claude",
@@ -433,9 +431,6 @@ def _expected_marketplace_bytes(
         ".mcp.json": _document_json(mcp),
         _ATTESTATION_NAME: _attestation_bytes(schema_hash=schema_hash, mcp_url=mcp_url),
         "skills/sensai/SKILL.md": source["shared/skills/sensai/SKILL.md"],
-        "skills/sensai/scripts/package_runner.py": source[
-            "shared/skills/sensai/scripts/package_runner.py"
-        ],
     }
     payload["MANIFEST.sha256"] = "".join(
         f"{hashlib.sha256(content).hexdigest()}  {relative}\n"

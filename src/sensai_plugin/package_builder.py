@@ -47,10 +47,6 @@ _SOURCE_TO_PAYLOADS: dict[str, tuple[tuple[str, str], ...]] = {
         ("codex", "skills/sensai/SKILL.md"),
         ("claude", "skills/sensai/SKILL.md"),
     ),
-    "shared/skills/sensai/scripts/package_runner.py": (
-        ("codex", "skills/sensai/scripts/package_runner.py"),
-        ("claude", "skills/sensai/scripts/package_runner.py"),
-    ),
     "codex/.codex-plugin/plugin.json": (("codex", ".codex-plugin/plugin.json"),),
     "claude/.claude-plugin/plugin.json": (("claude", ".claude-plugin/plugin.json"),),
 }
@@ -60,7 +56,6 @@ _REQUIRED_DIRECTORIES = frozenset(
         "shared",
         "shared/skills",
         "shared/skills/sensai",
-        "shared/skills/sensai/scripts",
         "codex",
         "codex/.codex-plugin",
         "claude",
@@ -73,7 +68,6 @@ _EXPECTED_PAYLOAD_FILES: dict[str, frozenset[str]] = {
             ".codex-plugin/plugin.json",
             ".mcp.json",
             "skills/sensai/SKILL.md",
-            "skills/sensai/scripts/package_runner.py",
         }
     ),
     "claude": frozenset(
@@ -81,7 +75,6 @@ _EXPECTED_PAYLOAD_FILES: dict[str, frozenset[str]] = {
             ".claude-plugin/plugin.json",
             ".mcp.json",
             "skills/sensai/SKILL.md",
-            "skills/sensai/scripts/package_runner.py",
         }
     ),
 }
