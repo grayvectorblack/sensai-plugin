@@ -46,7 +46,7 @@ def test_profession_and_one_to_five_programs_are_valid_follow_up_answers() -> No
 def test_first_use_does_not_require_a_scenario_or_expose_internals() -> None:
     skill = _normalized_skill()
 
-    assert "Do not ask the user for an automation scenario before this first call." in skill
+    assert "Do not ask the user for a work scenario before this first call." in skill
     assert (
         "Never expose MCP, tool names, `conversation_id`, environment variables, invitation "
         "tokens, or commands to the user."

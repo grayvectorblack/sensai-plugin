@@ -1,8 +1,8 @@
 # Sensai Plugin
 
 Sensai connects Codex or Claude to a remote adviser that helps an AI agent understand the user's
-work, compare useful automations, and prepare a practical first workflow. After the user selects a
-vetted automation, the plugin may create its declared local files and run its generator plus an
+work, compare useful scenarios, and prepare a practical first workflow. After the user selects a
+vetted scenario, the plugin may create its declared local files and run its generator plus an
 independent verification through Codex's normal file and command approval. The first demo package
 turns a sample marketing CSV into a verified, self-contained weekly HTML report. It does not
 connect to Gmail, Google Sheets, or other external services on the user's behalf.
@@ -35,7 +35,7 @@ that conversation started. In the fresh chat, use a natural request such as:
 
 The agent contacts Sensai, relays its introduction, and asks what the colleague does for work and
 which one to five programs or websites they use most often. The colleague does not need to enter
-plugin commands, handle credentials, or describe an automation idea in this second chat.
+plugin commands, handle credentials, or describe a scenario idea in this second chat.
 
 If installation fails before Sensai starts, the agent may send one short error description to the
 public `POST https://black-vector.com/sensai/install-help/search` endpoint. It must not include

@@ -8,7 +8,7 @@ agent workflow. Send only the user's current request and the minimum context nee
 do not send files, secrets, or full chat history unless the user explicitly approves that transfer.
 
 Treat "Continue Sensai setup" and equivalent natural requests to start, continue, or finish Sensai
-setup as first use. Immediately call `tell_sensai`. Do not ask the user for an automation scenario
+setup as first use. Immediately call `tell_sensai`. Do not ask the user for a work scenario
 before this first call. Send exactly this first-contact message: "Continue Sensai setup". Do not
 add instructions or user context to that first message. The user does not need to know or type that
 first-contact message.
@@ -23,7 +23,7 @@ answers as replies to Sensai, call `tell_sensai` again with those answers, and p
 `conversation_id`. Do not ask again for information the user has already provided unless Sensai
 asks for clarification.
 
-When Sensai returns a curated implementation package after the user selects an automation, execute
+When Sensai returns a curated implementation package after the user selects a scenario, execute
 it locally instead of merely displaying it. Do not paste the package or its file contents into chat.
 Use the bundled deterministic helper at `scripts/package_runner.py`; delegate validation, writing,
 execution, independent verification, and rollback to the helper. Never create, edit, validate, or remove package
