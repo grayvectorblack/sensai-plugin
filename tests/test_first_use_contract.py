@@ -318,17 +318,26 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
 def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
     raw_readme = README.read_text(encoding="utf-8")
     readme = _normalized_readme()
+    human_prompt = "Install Sensai https://github.com/grayvectorblack/sensai-plugin"
 
     assert "## Installation (if you are human)" in raw_readme
     assert f"[Codex]({CODEX_DOWNLOAD_URL})" in raw_readme
     assert f"[Claude Code]({CLAUDE_CODE_DOWNLOAD_URL})" in raw_readme
-    assert "Install Sensai https://github.com/grayvectorblack/sensai-plugin" in raw_readme
+    assert raw_readme.count(human_prompt) == 1
+    assert human_prompt.startswith("Install Sensai ")
+    assert CODEX_MARKETPLACE_COMMAND not in human_prompt
+    assert CODEX_INSTALL_COMMAND not in human_prompt
+    assert CLAUDE_MARKETPLACE_COMMAND not in human_prompt
+    assert CLAUDE_INSTALL_COMMAND not in human_prompt
     assert "## After installation (if you are an AI agent)" in raw_readme
     assert "complete the host's native Sensai Google sign-in yourself" in readme
     assert "Google sign-in is needed to connect Sensai to this Codex session." in readme
     assert f"[new chat]({CODEX_NEW_CHAT_URL})" in raw_readme
     assert "Then press Enter to send the prepared message." in readme
     assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
+    assert readme.index("Google sign-in is needed to connect Sensai to this Codex session.") < readme.index(
+        "codex mcp login sensai"
+    ) < readme.index("The Sensai plugin is installed. To start using it, open a")
     assert "Never use a skill installer" in readme
     assert "Never ask the person to greet Sensai manually." in readme
     assert "Never ask the person to introduce themselves." in readme
