@@ -25,8 +25,11 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert "without waiting for another human command" in normalized.casefold()
     assert "brief, natural greeting through the installed Sensai MCP" in normalized
     assert "starts native sign-in if needed and returns the next instruction" in normalized
-    assert "If the plugin requires a new chat to work" in readme
-    assert "offer the person one sentence in a copyable code block" in normalized
+    assert "Do not claim that sign-in has started" in readme
+    assert "unless the MCP client actually opens the browser or returns an authorization request" in normalized
+    assert "If the Sensai MCP is unavailable in the current chat after installation" in readme
+    assert "a new chat is required" in normalized
+    assert "offer the person one sentence in a copyable code block" in normalized.casefold()
     assert "the agent in the new chat immediately understands what to do" in normalized
     assert "how to connect to the MCP" in normalized
     assert "Public source:" not in readme
