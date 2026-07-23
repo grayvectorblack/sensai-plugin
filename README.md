@@ -24,14 +24,24 @@ plugin installation system. Never use a skill installer. Do not copy an internal
 by hand. If native plugin installation is unavailable, tell the person plainly that Sensai could
 not be installed and stop. Do not invent a fallback installation.
 
-After installation succeeds, if the host can load or activate the plugin in the current chat,
-continue automatically and contact Sensai immediately with a brief, natural greeting, without
-waiting for another human command. This starts native sign-in if needed and returns the next
-instruction.
+While still in this installer chat, immediately complete the host's native Sensai Google sign-in
+yourself. Do this before creating, offering, or starting any fresh chat. In Codex, run
+`codex mcp login sensai` internally. Keep the login operation alive for its real five-minute
+callback window and continue waiting while the person completes Google consent in the browser.
+Retry only after that operation reports a true timeout. The person handles only Google's browser
+account selection and consent; never ask them to run a command, copy a URL, code, token, or
+credential, or report that they are done.
 
-If the host can create a fresh chat or task itself, create it and continue there automatically.
-Only if the platform truly requires the person to start a fresh chat, offer exactly the copyable
-continuation sentence already provided in the human request and nothing else.
+Do not create, offer, or start the fresh chat before sign-in succeeds. Only after sign-in succeeds,
+load Sensai in one fresh chat or task. If the host can create that fresh context itself, create it
+and continue there automatically. Only if the platform truly requires the person to start it,
+offer exactly the copyable continuation sentence already provided in the human request and nothing
+else. The normal installation path has exactly one fresh-chat handoff and never starts a nested
+Codex process.
+
+That fresh chat must contact Sensai immediately with authorization already present. Send a brief,
+natural greeting asking Sensai to introduce itself and explain what it needs next, without waiting
+for another human command.
 
 Never ask the person to greet Sensai manually. Do not include MCP, commands, paths, a plugin
 version, or transport details in that sentence or in a status update.

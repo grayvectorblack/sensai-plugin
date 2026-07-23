@@ -8,10 +8,9 @@ The supported journey starts with exactly one natural request:
 
 The request first directs the installing agent to the transparent public README instead of choosing
 an installer in advance. In the same sentence, it requires the agent to keep installation mechanics
-private, continue automatically after installation, and provide the exact safe handoff already
-embedded in the request only when the platform requires the person to start a fresh chat. The agent
-then detects Codex versus Claude Code, installs through the platform's native plugin commands, loads
-the plugin in the required fresh context, and starts a natural first conversation with Sensai.
+private and continue automatically. The agent then detects Codex versus Claude Code and completes
+these steps in strict order: native plugin installation, native Google sign-in in the installer
+chat, exactly one fresh chat, and the first `tell_sensai` call.
 
 A brief ordinary-language acknowledgement is allowed while installation is in progress. It must
 not expose commands, paths, versions, a plugin manager, MCP, transport, or other installation
@@ -19,12 +18,17 @@ mechanics.
 
 ## Platform boundary
 
-Codex loads a newly installed plugin in a fresh task. The installing agent creates that task and
-greets Sensai naturally when its host exposes task creation. If the running Claude Code session
-does not expose the newly installed plugin, the agent starts a fresh session when its host permits
-that. Only when the platform requires the person to start the fresh context does the agent provide
-the exact safe continuation sentence from the request and no other setup request. It never asks the
-person to introduce themselves or greet Sensai manually.
+Codex loads a newly installed plugin in a fresh task. Before creating or offering that task, the
+installing agent completes Sensai's native Google sign-in while the installer chat is still active.
+It keeps the real login operation alive, lets the person handle only Google's browser consent, and
+waits for success. A timeout is real only when the host's login operation reports it.
+
+After sign-in succeeds, the installing agent creates exactly one fresh chat and continues there
+when its host exposes task creation. Only when the platform requires the person to start that fresh
+context does the agent provide the exact safe continuation sentence from the original request and
+no other setup request. The new chat starts with authorization already present and greets Sensai
+immediately. A second nested Codex launch is forbidden. A second fresh-chat handoff is forbidden in
+the normal path. The agent never asks the person to introduce themselves or greet Sensai manually.
 
 The platforms may still require the person to approve plugin installation and, once server OAuth is
 available, authorize Sensai in a browser. Those are platform security boundaries, not additional
@@ -37,10 +41,14 @@ agent, not the person directly.
 ## Authorization boundary
 
 The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint and uses
-the server's standard OAuth metadata. The user's agent starts its host's native MCP sign-in when
-needed and keeps the native callback listener alive until the login command succeeds or exits. A
-yielded long-running terminal operation is polled throughout Codex's native five-minute callback
-window rather than abandoned. If that window actually expires, the agent starts a fresh native
-login itself instead of asking the person to run a command. The person completes the browser login,
-and the agent retries the original natural greeting. If OAuth is unavailable, first contact fails
-clearly instead of requesting a copied credential.
+the server's standard OAuth metadata. The installing agent starts its host's native MCP sign-in
+after native plugin installation and before the fresh chat. It keeps the native callback listener
+alive until the login command succeeds or exits. A yielded long-running terminal operation is
+polled throughout Codex's native five-minute callback window rather than abandoned. If that window
+actually expires, the agent starts a fresh native login itself instead of asking the person to run
+a command. The person completes only the browser login and consent.
+
+If credentials are unexpectedly absent in the fresh chat, the loaded Sensai skill retains the same
+native sign-in recovery. Recovery retries the greeting in the current chat and never starts a
+nested agent or requests another fresh-chat handoff. If OAuth remains unavailable, first contact
+fails clearly instead of requesting a copied credential.

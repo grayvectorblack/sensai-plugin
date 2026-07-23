@@ -18,27 +18,26 @@ locally through your platform's normal controls. Perform every step you can auto
 user only for genuine authorization or consent, payment, secrets that must be entered locally, or
 confirmation before an irreversible action or external side effect.
 
-After successful installation, if the host can load or activate the plugin in the current chat,
-continue automatically and contact Sensai without waiting for another user message. If the host
-can create a fresh chat or task itself, create it and continue there automatically. Only if the
-platform truly requires the user to start a fresh chat, offer exactly one short copyable
-continuation sentence: `Continue with Sensai and contact Sensai automatically.` Never ask the user
-to greet Sensai manually. Never ask the user to introduce themselves. Do not include MCP, commands,
-paths, a plugin version, or transport details in that sentence or in a status update.
+The normal installation flow completes native Sensai Google sign-in before this skill is loaded in
+its one fresh chat. Never start a nested Codex process to continue or call Sensai. Never create a
+second fresh-chat handoff for authorization. Never ask the user to greet Sensai manually. Never ask
+the user to introduce themselves.
 
 After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting that asks
-Sensai to introduce itself and explain what it needs next. Authorization may pause this first call;
-continue the same request afterward. Do not ask your user for a work scenario before this call.
+Sensai to introduce itself and explain what it needs next. Authorization should already be present.
+Do not ask your user for a work scenario before this call.
 
-If the first call requires authorization, use your host's native MCP sign-in for the installed
-Sensai server. In Codex, run `codex mcp login sensai` yourself. Never ask the user to run this
-command. Codex's native callback window is five minutes. Keep that command and its callback listener
-running, and continue polling the same command throughout that window while the user completes
-Google sign-in. Do not end the turn, ask the user to reply when done, or ask the user to run any
-command while the login command is still running. If the native callback window actually times out,
-immediately start a fresh native login yourself. Let your user complete only the browser login and
-consent screen, then retry the same greeting. Never ask your user to copy an authorization URL,
-code, or credential into chat or local configuration.
+If authorization is unexpectedly absent, use your host's native MCP sign-in for the installed
+Sensai server as recovery. In Codex, run `codex mcp login sensai` yourself. Never ask the user to
+run this command. Codex's native callback window is five minutes. Keep that command and its callback
+listener running, and continue polling the same command throughout that window while the user
+completes Google sign-in. Do not end the turn, ask the user to reply when done, or ask the user to
+run any command while the login command is still running. If the native callback window actually
+times out, immediately start a fresh native login yourself. Let your user complete only the browser
+login and consent screen, then retry the same greeting in this chat. Never ask your user to copy an
+authorization URL, code, or credential into chat or local configuration. If the host still cannot
+use the completed authorization, explain plainly that Sensai is temporarily unavailable; do not
+start a nested agent or ask for another fresh chat.
 
 While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
 callback or listener, a process, command, path, plugin version, or internal session. Never claim a

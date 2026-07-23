@@ -46,8 +46,10 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert "This is the person's only action:" in readme
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in normalized.casefold()
-    assert "contact Sensai immediately with a brief, natural greeting" in normalized
-    assert "starts native sign-in if needed and returns the next instruction" in normalized
+    assert (
+        "That fresh chat must contact Sensai immediately with authorization already present."
+        in normalized
+    )
     assert "Install Sensai only through the host's native plugin installation system." in normalized
     assert "Never use a skill installer" in normalized
     assert "Do not copy an internal plugin directory by hand." in normalized
@@ -57,15 +59,15 @@ def test_readme_has_one_github_first_install_request() -> None:
     ) in normalized
     assert "Do not invent a fallback installation." in normalized
     assert (
-        "After installation succeeds, if the host can load or activate the plugin in the current "
-        "chat, continue automatically and contact Sensai immediately" in normalized
+        "While still in this installer chat, immediately complete the host's native Sensai Google "
+        "sign-in yourself." in normalized
     )
     assert (
-        "If the host can create a fresh chat or task itself, create it and continue there "
+        "If the host can create that fresh context itself, create it and continue there "
         "automatically."
     ) in normalized
     assert (
-        "Only if the platform truly requires the person to start a fresh chat, offer exactly the "
+        "Only if the platform truly requires the person to start it, offer exactly the "
         "copyable continuation sentence already provided in the human request and nothing else."
     ) in normalized
     assert normalized.count(continuation) == 1
