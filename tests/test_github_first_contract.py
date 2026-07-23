@@ -25,11 +25,10 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert "without waiting for another human command" in normalized.casefold()
     assert "brief, natural greeting through the installed Sensai MCP" in normalized
     assert "starts native sign-in if needed and returns the next instruction" in normalized
-    assert "If loading the plugin requires a new chat" in readme
-    assert readme.count(
-        "Sensai is already installed; use the Sensai plugin, connect through its configured MCP, "
-        "and send Sensai a brief natural greeting."
-    ) == 1
+    assert "If the plugin requires a new chat to work" in readme
+    assert "offer the person one sentence in a copyable code block" in normalized
+    assert "the agent in the new chat immediately understands what to do" in normalized
+    assert "how to connect to the MCP" in normalized
     assert "Public source:" not in readme
     assert "Privacy:" not in readme
     assert "### Codex" not in readme
