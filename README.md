@@ -63,14 +63,14 @@ Sensai once. In Codex, tell the person in the person's language the equivalent o
 plugin is installed. To start using it, open a [new chat]. Then press Enter to send the prepared
 message." Make `new chat` a `codex://new?prompt=...` link. Its visible label and its prepared
 prompt must be in the person's language too. The prepared prompt must address Sensai through
-`[@Sensai](plugin://sensai@sensai)`, ask Sensai to introduce itself briefly, and ask the human
-about their work, up to five common programs or sites, and recurring tasks. The link only fills
+`[@Sensai](plugin://sensai@sensai)` followed only by a brief natural greeting, such as
+`@sensai, hello!` in the person's language. Do not tell Sensai which questions to ask. The link only fills
 the new-chat composer; it does not send the message. In Claude Code, run `/reload-plugins` once or start one new session when
 reload is unavailable, never both. The normal installation path has exactly one fresh-context
 boundary and never starts a nested Codex process.
 
-That loaded context must contact Sensai immediately with authorization already present. Send the
-localized prepared greeting without waiting for another human command.
+That loaded context must contact Sensai immediately with authorization already present. Send only
+the localized short greeting without waiting for another human command.
 
 Never ask the person to greet Sensai manually. Do not include MCP, commands, paths, a plugin
 version, or transport details in that sentence or in a status update.

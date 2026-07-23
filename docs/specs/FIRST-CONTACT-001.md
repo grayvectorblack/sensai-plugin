@@ -51,9 +51,9 @@ waits for success. A timeout is real only when the host's login operation report
 After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
 installed and offers a clickable `new chat` link in that language. The link is a documented
 `codex://new?prompt=...` URL whose decoded prompt is also in the person's language, starts with
-`[@Sensai](plugin://sensai@sensai)`, and asks Sensai to introduce itself briefly before asking the
-human about their work, up to five common programs or sites, and recurring tasks. It only fills Codex's
-composer; the person presses Enter to send it. Claude Code reloads plugins once in the current
+`[@Sensai](plugin://sensai@sensai)`, and contains only a brief natural greeting in the person's
+language. Sensai decides its own first question. It only fills Codex's composer; the person presses
+Enter to send it. Claude Code reloads plugins once in the current
 session, or starts one new session when reload is unavailable; it never does both. The loaded
 context starts with authorization already present and greets Sensai immediately. A second nested
 Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The

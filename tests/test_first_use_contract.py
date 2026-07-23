@@ -172,6 +172,9 @@ def test_normal_install_orders_authorization_before_the_codex_new_chat_link() ->
     assert (
         "Its visible label and its prepared prompt must be in the person's language too." in readme
     )
+    assert "followed only by a brief natural greeting" in readme
+    assert "Do not tell Sensai which questions to ask." in readme
+    assert "localized short greeting" in readme
     assert "Make `new chat` a `codex://new?prompt=...` link." in readme
     assert "The link only fills the new-chat composer; it does not send the message." in readme
     assert (
@@ -369,6 +372,8 @@ def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
     assert (
         "Its visible label and its prepared prompt must be in the person's language too." in readme
     )
+    assert "followed only by a brief natural greeting" in readme
+    assert "Do not tell Sensai which questions to ask." in readme
     assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
     assert (
         readme.index("tell the person in the person's language that Google sign-in is")
