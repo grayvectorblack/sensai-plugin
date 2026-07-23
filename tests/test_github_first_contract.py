@@ -22,15 +22,11 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
     assert "## After installation (AI agent)" in readme
-    assert "without waiting for another human command" in normalized
+    assert "without waiting for another human command" in normalized.casefold()
     assert "brief, natural greeting through the installed Sensai MCP" in normalized
     assert "starts native sign-in if needed and returns the next instruction" in normalized
     assert "Public source:" not in readme
     assert "Privacy:" not in readme
-    assert "### Codex" not in readme
-    assert "### Claude Code" not in readme
-    assert "## MCP authorization" not in readme
-    assert "## Development" not in readme
     assert "black-vector.com/sensai/invite" not in readme
     assert "one-time code" not in readme.lower()
     assert "bootstrap" not in readme.lower()

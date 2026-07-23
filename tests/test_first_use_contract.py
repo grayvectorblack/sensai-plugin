@@ -86,7 +86,7 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     assert "This is the person's only action:" in readme
     assert "Install Sensai from https://github.com/grayvectorblack/sensai-plugin" in readme
     assert "## After installation (AI agent)" in readme
-    assert "without waiting for another human command" in readme
+    assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme
 
 
@@ -97,11 +97,11 @@ def test_readme_does_not_start_with_a_marketing_routine() -> None:
     assert "Help me choose one routine" not in readme
 
 
-def test_readme_stays_a_short_two_audience_handoff() -> None:
+def test_readme_preserves_product_context_and_removes_only_requested_copy() -> None:
     readme = README.read_text(encoding="utf-8")
 
-    assert readme.count("## ") == 2
-    assert len(readme.splitlines()) <= 20
+    assert "Sensai is an AI agent that advises another AI agent." in readme
+    assert "Sensai may return advice, architecture, detailed implementation instructions" in readme
     assert "Public source:" not in readme
     assert "Privacy:" not in readme
     assert "After this one request" not in readme
