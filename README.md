@@ -9,15 +9,16 @@ reference snippets. The user's own AI agent writes and reviews any resulting cod
 dependencies, runs it, and verifies it locally through the normal controls of Codex or Claude.
 Connector setup also happens locally. The person completes any authorization or consent screen.
 
-## Installation (human)
+## Installation (if you are human)
 
-This is the person's only action:
+1. You need Codex with an OpenAI subscription, or Claude Code with an Anthropic subscription.
+2. Start a new chat with this instruction:
 
 ```text
-Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions without technical details, complete Google sign-in, and continue automatically; only after sign-in, if a new chat is required, give me exactly this copyable sentence: Continue with Sensai and contact Sensai automatically.
+Install Sensai https://github.com/grayvectorblack/sensai-plugin
 ```
 
-## After installation (AI agent)
+## After installation (if you are an AI agent)
 
 Treat this repository as a native plugin marketplace. Install Sensai only through the host's native
 plugin installation system. Run the commands for the current host instead of inferring that native
@@ -59,9 +60,9 @@ Do not create, offer, or start the fresh chat before sign-in succeeds. Only afte
 load Sensai once: use one fresh task in Codex; in Claude Code, run `/reload-plugins` once or start
 one new session when reload is unavailable, never both. If the host can create the required fresh
 context itself, create it and continue there automatically. Only if the platform truly requires
-the person to start it, offer exactly the copyable continuation sentence already provided in the
-human request and nothing else. The normal installation path has exactly one fresh-context
-boundary and never starts a nested Codex process.
+the person to start it, offer exactly this copyable continuation sentence and nothing else:
+`Continue with Sensai and contact Sensai automatically.` The normal installation path has exactly
+one fresh-context boundary and never starts a nested Codex process.
 
 That loaded context must contact Sensai immediately with authorization already present. Send a
 brief, natural greeting asking Sensai to introduce itself and explain what it needs next, without
