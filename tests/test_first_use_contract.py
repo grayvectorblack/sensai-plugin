@@ -153,12 +153,17 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
 def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     readme = _normalized_readme()
     continuation = "Continue with Sensai and contact Sensai automatically."
+    install_request = (
+        "Open https://github.com/grayvectorblack/sensai-plugin and follow its installation "
+        "instructions."
+    )
 
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
-    assert (
-        "Install the Sensai plugin from https://github.com/grayvectorblack/sensai-plugin" in readme
-    )
+    assert readme.count(install_request) == 1
+    assert install_request.startswith("Open ")
+    assert " and follow " in install_request
+    assert not install_request.startswith("Install ")
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme

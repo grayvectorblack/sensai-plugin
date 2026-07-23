@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INSTALL_REQUEST = "Install the Sensai plugin from https://github.com/grayvectorblack/sensai-plugin"
+INSTALL_REQUEST = (
+    "Open https://github.com/grayvectorblack/sensai-plugin and follow its installation "
+    "instructions."
+)
 
 
 def _text_files() -> list[Path]:
@@ -20,6 +23,10 @@ def test_readme_has_one_github_first_install_request() -> None:
     continuation = "Continue with Sensai and contact Sensai automatically."
 
     assert readme.count(INSTALL_REQUEST) == 1
+    assert INSTALL_REQUEST.startswith("Open ")
+    assert " and follow " in INSTALL_REQUEST
+    assert not INSTALL_REQUEST.startswith("Install ")
+    assert "Install the Sensai plugin" not in INSTALL_REQUEST
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
     assert "## After installation (AI agent)" in readme

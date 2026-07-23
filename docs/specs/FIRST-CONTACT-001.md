@@ -4,9 +4,10 @@
 
 The supported journey starts with exactly one natural request:
 
-> Install Sensai from https://github.com/grayvectorblack/sensai-plugin
+> Open https://github.com/grayvectorblack/sensai-plugin and follow its installation instructions.
 
-The installing agent reads the public README, detects Codex versus Claude Code, installs through the
+The request first directs the installing agent to the transparent public README instead of choosing
+an installer in advance. The agent then detects Codex versus Claude Code, installs through the
 platform's native plugin commands, loads the plugin in the required fresh context, and starts a
 natural first conversation with Sensai. The person is not asked to type another setup phrase.
 
