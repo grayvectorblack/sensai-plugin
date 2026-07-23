@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import shlex
-import subprocess
-import sys
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -82,17 +79,15 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
     assert PACKAGED_SKILL.read_bytes() == SOURCE_SKILL.read_bytes()
 
 
-def test_exact_russian_install_request_uses_host_continuation_without_overclaiming() -> None:
+def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     readme = _normalized_readme()
-    readme_lower = readme.lower()
 
-    install_request = "Установи Sensai https://github.com/grayvectorblack/sensai-plugin"
-    assert install_request in readme
-    assert "exactly this request" in readme_lower
-    assert "starts a natural first conversation with Sensai" in readme
-    assert "never claims the current task hot-loaded the plugin" in readme
-    assert "opening one fresh task is the only remaining action" in readme
-    assert "restarting Claude Code is the only remaining action" in readme
+    assert "## Installation (human)" in readme
+    assert "This is the person's only action:" in readme
+    assert "Install Sensai from https://github.com/grayvectorblack/sensai-plugin" in readme
+    assert "## After installation (AI agent)" in readme
+    assert "without waiting for another human command" in readme
+    assert "starts native sign-in if needed and returns the next instruction" in readme
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
@@ -102,17 +97,14 @@ def test_readme_does_not_start_with_a_marketing_routine() -> None:
     assert "Help me choose one routine" not in readme
 
 
-def test_readme_has_a_short_precise_privacy_boundary() -> None:
+def test_readme_stays_a_short_two_audience_handoff() -> None:
     readme = README.read_text(encoding="utf-8")
-    introduction = " ".join(readme[:1600].replace("> ", "").split())
 
-    assert (
-        "Sensai receives only text that the user's AI agent explicitly sends to it." in introduction
-    )
-    assert "Sensai does not connect to external accounts or run code" in introduction
-    assert "https://github.com/grayvectorblack/sensai-plugin" in introduction
-    assert "Connector setup also happens locally." in introduction
-    assert "The person completes any authorization or consent screen." in introduction
+    assert readme.count("## ") == 2
+    assert len(readme.splitlines()) <= 20
+    assert "Public source:" not in readme
+    assert "Privacy:" not in readme
+    assert "After this one request" not in readme
 
 
 def test_public_runtime_contains_no_legacy_install_or_manual_auth_flow() -> None:
@@ -144,34 +136,6 @@ def test_public_runtime_contains_no_legacy_install_or_manual_auth_flow() -> None
             assert not any(fragment in content for fragment in forbidden), path
 
 
-def test_documented_release_build_command_matches_and_executes_the_cli(tmp_path: Path) -> None:
-    readme = README.read_text(encoding="utf-8")
-    command_line = next(
-        line
-        for line in readme.splitlines()
-        if line.startswith("uv run python scripts/build_release.py ")
-    )
-    documented = shlex.split(command_line)
-
-    assert documented[:4] == ["uv", "run", "python", "scripts/build_release.py"]
-    assert documented[4:] == [
-        "--output",
-        "/path/to/release",
-        "--mcp-url",
-        "https://black-vector.com/sensai/mcp",
-    ]
-
-    output = tmp_path / "release"
-    arguments = documented[4:]
-    arguments[arguments.index("/path/to/release")] = str(output)
-    subprocess.run(
-        [sys.executable, str(REPOSITORY_ROOT / documented[3]), *arguments],
-        cwd=REPOSITORY_ROOT,
-        check=True,
-    )
-    assert (output / "release.json").is_file()
-
-
 def test_magic_first_contact_phrase_is_absent_from_shipped_artifacts() -> None:
     forbidden = "Continue Sensai" + " setup"
     third_person_instruction = "ask your AI" + " agent"
@@ -193,3 +157,15 @@ def test_magic_first_contact_phrase_is_absent_from_shipped_artifacts() -> None:
         text = path.read_text(encoding="utf-8")
         assert forbidden not in text, path
         assert third_person_instruction.lower() not in text.lower(), path
+
+
+def test_public_repository_contains_no_cyrillic_text() -> None:
+    ignored_parts = {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv"}
+    for path in REPOSITORY_ROOT.rglob("*"):
+        if not path.is_file() or any(part in ignored_parts for part in path.parts):
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        assert not any("\u0400" <= character <= "\u04ff" for character in content), path
