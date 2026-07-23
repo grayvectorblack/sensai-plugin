@@ -842,9 +842,7 @@ def _assert_installed(
         raise ClaudeAcceptanceError("installed Claude plugin version or scope is not exact")
     if entry.get("enabled") is not True:
         raise ClaudeAcceptanceError("installed Claude plugin is not enabled")
-    if entry.get("mcpServers") != {
-        "sensai": {"type": "http", "url": release.mcp_url}
-    }:
+    if entry.get("mcpServers") != {"sensai": {"type": "http", "url": release.mcp_url}}:
         raise ClaudeAcceptanceError("installed Claude plugin MCP URL is not exact")
     raw_install_path = Path(str(entry.get("installPath", "")))
     if not raw_install_path.is_absolute():

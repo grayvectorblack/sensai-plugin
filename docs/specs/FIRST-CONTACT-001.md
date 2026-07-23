@@ -11,11 +11,36 @@ an installer in advance. In the same sentence, it requires the agent to keep ins
 private, complete Google sign-in, and continue automatically. Only after confirmed sign-in may it
 offer the single fresh-chat continuation. The agent then detects Codex versus Claude Code and
 completes these steps in strict order: native plugin installation, native Google sign-in in the
-installer chat, exactly one fresh chat, and the first `tell_sensai` call.
+installer chat, exactly one fresh task, session, or reload boundary, and the first `tell_sensai`
+call.
 
 A brief ordinary-language acknowledgement is allowed while installation is in progress. It must
 not expose commands, paths, versions, a plugin manager, MCP, transport, or other installation
 mechanics.
+
+## Deterministic native installation
+
+The installing agent runs the exact command pair for its current host. It does not infer support
+from a UI, prose, or memory.
+
+Codex:
+
+```bash
+codex plugin marketplace add grayvectorblack/sensai-plugin
+codex plugin add sensai@sensai
+```
+
+Claude Code:
+
+```bash
+claude plugin marketplace add grayvectorblack/sensai-plugin
+claude plugin install sensai@sensai --scope user
+```
+
+A skill installer and manual file copying are forbidden. The agent may report that native
+installation is unsupported only after an applicable installation command actually returns a
+nonzero result. Commands, command results, marketplace mechanics, and plugin mechanics remain
+private from the person.
 
 ## Platform boundary
 
@@ -24,13 +49,14 @@ installing agent completes Sensai's native Google sign-in while the installer ch
 It keeps the real login operation alive, lets the person handle only Google's browser consent, and
 waits for success. A timeout is real only when the host's login operation reports it.
 
-After sign-in succeeds, the installing agent creates exactly one fresh chat and continues there
-when its host exposes task creation. Only when the platform requires the person to start that fresh
-context does the agent provide the exact safe continuation sentence from the original request and
-no other setup request. The new chat starts with authorization already present and greets Sensai
-immediately. A second nested Codex launch is forbidden. A second fresh-chat handoff is forbidden in
-the normal path. The continuation must never be emitted before Google sign-in has confirmed success.
-The agent never asks the person to introduce themselves or greet Sensai manually.
+After sign-in succeeds, Codex creates exactly one fresh task. Claude Code reloads plugins once in
+the current session, or starts exactly one new session when reload is unavailable; it never does
+both. Only when the platform requires the person to start that fresh context does the agent provide
+the exact safe continuation sentence from the original request and no other setup request. The
+loaded context starts with authorization already present and greets Sensai immediately. A second
+nested Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path.
+The continuation must never be emitted before Google sign-in has confirmed success. The agent never
+asks the person to introduce themselves or greet Sensai manually.
 
 The platforms may still require the person to approve plugin installation and, once server OAuth is
 available, authorize Sensai in a browser. Those are platform security boundaries, not additional

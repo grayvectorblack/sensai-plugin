@@ -9,6 +9,10 @@ README = REPOSITORY_ROOT / "README.md"
 FIRST_CONTACT_SPEC = REPOSITORY_ROOT / "docs/specs/FIRST-CONTACT-001.md"
 INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 CONTINUATION = "Continue with Sensai and contact Sensai automatically."
+CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai-plugin"
+CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
+CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
+CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
 INSTALL_REQUEST = (
     "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
     "without technical details, complete Google sign-in, and continue automatically; only after "
@@ -99,37 +103,79 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
 
 def test_normal_install_orders_authorization_before_the_single_fresh_chat() -> None:
     readme = _normalized_readme()
-    install = readme.index(
-        "Install Sensai only through the host's native plugin installation system."
-    )
+    codex_marketplace = readme.index(CODEX_MARKETPLACE_COMMAND)
+    codex_install = readme.index(CODEX_INSTALL_COMMAND)
+    claude_marketplace = readme.index(CLAUDE_MARKETPLACE_COMMAND)
+    claude_install = readme.index(CLAUDE_INSTALL_COMMAND)
     authorize = readme.index(
         "While still in this installer chat, immediately complete the host's native Sensai "
         "Google sign-in yourself."
     )
-    fresh_chat = readme.index("Only after sign-in succeeds, load Sensai in one fresh chat or task.")
+    fresh_context = readme.index("Only after sign-in succeeds, load Sensai once:")
     first_call = readme.index(
-        "That fresh chat must contact Sensai immediately with authorization already present."
+        "That loaded context must contact Sensai immediately with authorization already present."
     )
 
-    assert install < authorize < fresh_chat < first_call
+    assert codex_marketplace < codex_install < authorize
+    assert claude_marketplace < claude_install < authorize
+    assert authorize < fresh_context < first_call
     assert "Do not create, offer, or start the fresh chat before sign-in succeeds." in readme
     assert (
-        "The normal installation path has exactly one fresh-chat handoff and never starts a nested "
-        "Codex process."
+        "The normal installation path has exactly one fresh-context boundary and never starts a "
+        "nested Codex process."
     ) in readme
     assert readme.count(CONTINUATION) == 1
 
 
+def test_readme_requires_real_native_install_commands_before_reporting_unsupported() -> None:
+    readme = _normalized_readme()
+
+    for command in (
+        CODEX_MARKETPLACE_COMMAND,
+        CODEX_INSTALL_COMMAND,
+        CLAUDE_MARKETPLACE_COMMAND,
+        CLAUDE_INSTALL_COMMAND,
+    ):
+        assert readme.count(command) == 1
+
+    run_commands = readme.index(
+        "Run the commands for the current host instead of inferring that native installation is "
+        "unsupported."
+    )
+    nonzero = readme.index(
+        "Only infer or report that native installation is unsupported, or say that Sensai could "
+        "not be installed, after one of the applicable commands actually exits with a nonzero "
+        "status."
+    )
+    private = readme.index(
+        "Keep the commands, exit status, marketplace, and other installation mechanics private "
+        "from the person."
+    )
+
+    assert run_commands < readme.index(CODEX_MARKETPLACE_COMMAND) < nonzero < private
+    assert run_commands < readme.index(CLAUDE_MARKETPLACE_COMMAND) < nonzero < private
+    assert "Never use a skill installer" in readme
+
+
 def test_first_contact_spec_enforces_the_same_one_chat_order() -> None:
     spec = _normalized_spec()
-    install = spec.index("native plugin installation")
-    authorize = spec.index("native Google sign-in in the installer chat")
-    fresh_chat = spec.index("exactly one fresh chat")
-    first_call = spec.index("first `tell_sensai` call")
+    codex_marketplace = spec.index(CODEX_MARKETPLACE_COMMAND)
+    codex_install = spec.index(CODEX_INSTALL_COMMAND)
+    claude_marketplace = spec.index(CLAUDE_MARKETPLACE_COMMAND)
+    claude_install = spec.index(CLAUDE_INSTALL_COMMAND)
+    last_install = max(codex_install, claude_install)
+    authorize = spec.index(
+        "installing agent completes Sensai's native Google sign-in", last_install
+    )
+    fresh_context = spec.index("After sign-in succeeds", authorize)
+    first_call = spec.index("greets Sensai immediately", fresh_context)
 
-    assert install < authorize < fresh_chat < first_call
+    assert codex_marketplace < codex_install < authorize
+    assert claude_marketplace < claude_install < authorize
+    assert authorize < fresh_context < first_call
     assert "A second nested Codex launch is forbidden." in spec
-    assert "A second fresh-chat handoff is forbidden in the normal path." in spec
+    assert "A second fresh-context handoff is forbidden in the normal path." in spec
+    assert "only after an applicable installation command actually returns a nonzero result" in spec
 
 
 def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
@@ -231,6 +277,10 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     assert "follow its installation instructions without technical details" in install_request
     assert "complete Google sign-in" in install_request
     assert "continue automatically" in install_request
+    assert CODEX_MARKETPLACE_COMMAND not in install_request
+    assert CODEX_INSTALL_COMMAND not in install_request
+    assert CLAUDE_MARKETPLACE_COMMAND not in install_request
+    assert CLAUDE_INSTALL_COMMAND not in install_request
     assert (
         "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
         f"{CONTINUATION}" in install_request
