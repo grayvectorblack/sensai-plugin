@@ -21,3 +21,10 @@ Install Sensai from https://github.com/grayvectorblack/sensai-plugin
 
 Without waiting for another human command, send a brief, natural greeting through the installed
 Sensai MCP. This starts native sign-in if needed and returns the next instruction.
+
+If loading the plugin requires a new chat, give the person this one-sentence prompt in a copyable
+code block:
+
+```text
+Sensai is already installed; use the Sensai plugin, connect through its configured MCP, and send Sensai a brief natural greeting.
+```
