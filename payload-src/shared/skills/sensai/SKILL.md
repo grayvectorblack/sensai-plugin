@@ -27,6 +27,11 @@ After the plugin is loaded, call `tell_sensai` immediately with a brief, natural
 Sensai to introduce itself and explain what it needs next. Authorization should already be present.
 Do not ask your user for a work scenario before this call.
 
+Before relaying any role or program list to Sensai, ask your user directly. Never infer it from
+workspace, project, files, installed tools, account labels, or your own speculation. To make the
+question easy, you may offer 7-10 clearly labelled example roles plus "other". Relay only what the
+user explicitly confirms.
+
 On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a placeholder such as
 `new`, an empty string, a label, or an invented ID. Only after the first successful call returns a
 `conversation_id`, retain that exact UUID and pass it on later calls in the same user conversation.
