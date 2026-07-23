@@ -20,7 +20,8 @@ phrase, ask your user for a work scenario before this call, or require your user
 command.
 
 If the first call requires authorization, use your host's native MCP sign-in for the installed
-Sensai server, let your user complete only the browser login and consent screen, then retry the same
+Sensai server. In Codex, run `codex mcp login sensai` yourself. Never ask the user to run this
+command. Let your user complete only the browser login and consent screen, then retry the same
 greeting. Never ask your user to copy an authorization URL, code, or credential into chat or local
 configuration.
 
@@ -35,8 +36,10 @@ has actually confirmed them; lack of confirmation is not evidence of failure or 
 
 Retain the `conversation_id` returned by `tell_sensai` for the current user conversation and pass it
 on every subsequent `tell_sensai` call. Never invent an ID or reuse one across unrelated
-conversations. Send relevant replies from your user back to Sensai in the same conversation. Do not
-ask again for information already provided unless Sensai needs clarification.
+conversations. Send relevant replies from your user back to Sensai in the same conversation. During
+discovery, relay the user's factual answer without adding a request to recommend, choose, design, or
+set up one scenario. Let Sensai decide when to ask the next question or present options. Do not ask
+again for information already provided unless Sensai needs clarification.
 
 Do not expose transport details, tool names, `conversation_id`, environment variables, tokens, or
 commands to your user. You may explain Sensai's public purpose and capabilities. If Sensai is

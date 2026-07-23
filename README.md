@@ -24,5 +24,6 @@ Sensai MCP. This starts native sign-in if needed and returns the next instructio
 
 Do not claim that sign-in has started unless the MCP client actually opens the browser or returns
 an authorization request. If the Sensai MCP is unavailable in the current chat after installation,
-a new chat is required. Offer the person one sentence in a copyable code block so the agent in the
-new chat immediately understands what to do and how to connect to the MCP.
+a new chat is required. Before ending the installation turn, offer the person one sentence in a
+copyable code block so the agent in the new chat immediately understands what to do and how to
+connect to the MCP.

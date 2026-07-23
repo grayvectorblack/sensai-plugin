@@ -32,6 +32,8 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
     skill = _normalized_skill()
 
     assert "use your host's native MCP sign-in for the installed Sensai server" in skill
+    assert "In Codex, run `codex mcp login sensai` yourself" in skill
+    assert "Never ask the user to run this command." in skill
     assert "complete only the browser login and consent screen" in skill
     assert "then retry the same greeting" in skill
     assert (
@@ -72,6 +74,11 @@ def test_later_answers_keep_the_conversation_without_false_status_claims() -> No
     assert (
         "Send relevant replies from your user back to Sensai in the same conversation."
     ) in skill
+    assert (
+        "During discovery, relay the user's factual answer without adding a request to recommend, "
+        "choose, design, or set up one scenario."
+    ) in skill
+    assert "Let Sensai decide when to ask the next question or present options." in skill
     assert "lack of confirmation is not evidence of failure or disconnection" in skill
 
 
@@ -88,6 +95,7 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme
+    assert "Before ending the installation turn" in readme
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
