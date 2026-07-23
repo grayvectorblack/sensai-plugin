@@ -25,7 +25,7 @@ def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
         in skill
     )
     assert "asks Sensai to introduce itself and explain what it needs next" in skill
-    assert "Native OAuth may pause this first call" in skill
+    assert "Authorization may pause this first call" in skill
 
 
 def test_users_agent_handles_native_oauth_without_manual_credential_copying() -> None:
@@ -48,6 +48,18 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
         "Never ask your user to copy an authorization URL, code, or credential into chat or local "
         "configuration."
     ) in skill
+    assert (
+        "While authorization is pending, speak to your user in ordinary language only."
+    ) in skill
+    assert (
+        "Never mention MCP, a callback or listener, a process, command, path, plugin version, or "
+        "internal session."
+    ) in skill
+    assert ("Never claim a browser opened until navigation is actually observed.") in skill
+    assert (
+        "A safe update is simply that Sensai is being connected and Google sign-in may appear."
+    ) in skill
+    assert "Do not ask the user to run commands or report `done`." in skill
 
 
 def test_first_use_requires_no_second_human_command() -> None:

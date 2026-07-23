@@ -14,10 +14,9 @@ user only for genuine authorization or consent, payment, secrets that must be en
 confirmation before an irreversible action or external side effect.
 
 After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting that asks
-Sensai to introduce itself and explain what it needs next. Native OAuth may pause this first call
-while your user authorizes access; continue the same request afterward. Do not use a fixed setup
-phrase, ask your user for a work scenario before this call, or require your user to type another
-command.
+Sensai to introduce itself and explain what it needs next. Authorization may pause this first call;
+continue the same request afterward. Do not use a fixed setup phrase, ask your user for a work
+scenario before this call, or require your user to type another command.
 
 If the first call requires authorization, use your host's native MCP sign-in for the installed
 Sensai server. In Codex, run `codex mcp login sensai` yourself. Never ask the user to run this
@@ -28,6 +27,11 @@ command while the login command is still running. If the native callback window 
 immediately start a fresh native login yourself. Let your user complete only the browser login and
 consent screen, then retry the same greeting. Never ask your user to copy an authorization URL,
 code, or credential into chat or local configuration.
+
+While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
+callback or listener, a process, command, path, plugin version, or internal session. Never claim a
+browser opened until navigation is actually observed. A safe update is simply that Sensai is being
+connected and Google sign-in may appear. Do not ask the user to run commands or report `done`.
 
 Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
 their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;
