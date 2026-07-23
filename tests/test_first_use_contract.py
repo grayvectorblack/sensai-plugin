@@ -13,19 +13,12 @@ FIRST_CONTACT_SPEC = REPOSITORY_ROOT / "docs/specs/FIRST-CONTACT-001.md"
 SCENARIO_RELAY_FIXTURE = REPOSITORY_ROOT / "tests/fixtures/scenario_relay_contract.json"
 CODEX_DOWNLOAD_URL = "https://chatgpt.com/download/"
 CLAUDE_CODE_DOWNLOAD_URL = "https://claude.ai/download"
-CODEX_NEW_CHAT_PROMPT = (
-    "[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the "
-    "human for their role and the five main programs or sites they use at work."
-)
-CODEX_NEW_CHAT_URL = (
-    "codex://new?prompt=%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29%20Start%20Sensai.%20"
-    "Introduce%20yourself%20briefly%2C%20then%20ask%20the%20human%20for%20their%20role%20and%20"
-    "the%20five%20main%20programs%20or%20sites%20they%20use%20at%20work."
-)
 CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai-plugin"
 CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
 CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
 CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
+
+
 def _normalized_skill() -> str:
     return " ".join(SOURCE_SKILL.read_text(encoding="utf-8").split())
 
@@ -164,14 +157,22 @@ def test_normal_install_orders_authorization_before_the_codex_new_chat_link() ->
         "Google sign-in yourself."
     )
     fresh_context = readme.index("Do not create or offer a fresh chat before sign-in succeeds.")
-    new_chat_link = readme.index(CODEX_NEW_CHAT_URL)
+    new_chat_instruction = readme.index("Make `new chat` a `codex://new?prompt=...` link.")
 
     assert codex_marketplace < codex_install < authorize
     assert claude_marketplace < claude_install < authorize
-    assert authorize < fresh_context < new_chat_link
-    assert "Google sign-in is needed to connect Sensai to this Codex session." in readme
-    assert "The Sensai plugin is installed. To start using it, open a" in readme
-    assert f"[new chat]({CODEX_NEW_CHAT_URL})" in README.read_text(encoding="utf-8")
+    assert authorize < fresh_context < new_chat_instruction
+    assert "tell the person in the person's language that Google sign-in is" in readme
+    assert "Run `codex mcp login sensai` once as one long-running terminal operation." in readme
+    assert "Do not open the authorization URL manually." in readme
+    assert "tell the person in the person's language the equivalent of:" in readme
+    assert (
+        "The Sensai plugin is installed. To start using it, open a [new chat]. Then press" in readme
+    )
+    assert (
+        "Its visible label and its prepared prompt must be in the person's language too." in readme
+    )
+    assert "Make `new chat` a `codex://new?prompt=...` link." in readme
     assert "The link only fills the new-chat composer; it does not send the message." in readme
     assert (
         "The normal installation path has exactly one fresh-context boundary and never starts a "
@@ -217,9 +218,7 @@ def test_first_contact_spec_enforces_the_same_codex_new_chat_order() -> None:
     claude_marketplace = spec.index(CLAUDE_MARKETPLACE_COMMAND)
     claude_install = spec.index(CLAUDE_INSTALL_COMMAND)
     last_install = max(codex_install, claude_install)
-    authorize = spec.index(
-        "It then completes Sensai's native Google sign-in", last_install
-    )
+    authorize = spec.index("It then completes Sensai's native Google sign-in", last_install)
     fresh_context = spec.index("After sign-in succeeds, Codex tells the person", authorize)
     first_call = spec.index("greets Sensai immediately", fresh_context)
 
@@ -229,7 +228,7 @@ def test_first_contact_spec_enforces_the_same_codex_new_chat_order() -> None:
     assert "A second nested Codex launch is forbidden." in spec
     assert "A second fresh-context handoff is forbidden in the normal path." in spec
     assert "only after an applicable installation command actually returns a nonzero result" in spec
-    assert CODEX_NEW_CHAT_PROMPT in spec
+    assert "decoded prompt is also in the person's language" in spec
     assert "It only fills Codex's composer; the person presses Enter to send it." in spec
 
 
@@ -364,13 +363,18 @@ def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
     assert CLAUDE_INSTALL_COMMAND not in human_prompt
     assert "## After installation (if you are an AI agent)" in raw_readme
     assert "complete the host's native Sensai Google sign-in yourself" in readme
-    assert "Google sign-in is needed to connect Sensai to this Codex session." in readme
-    assert f"[new chat]({CODEX_NEW_CHAT_URL})" in raw_readme
-    assert "Then press Enter to send the prepared message." in readme
+    assert "tell the person in the person's language that Google sign-in is" in readme
+    assert "tell the person in the person's language the equivalent of:" in readme
+    assert "Then press Enter to send the prepared" in readme
+    assert (
+        "Its visible label and its prepared prompt must be in the person's language too." in readme
+    )
     assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
-    assert readme.index("Google sign-in is needed to connect Sensai to this Codex session.") < readme.index(
-        "codex mcp login sensai"
-    ) < readme.index("The Sensai plugin is installed. To start using it, open a")
+    assert (
+        readme.index("tell the person in the person's language that Google sign-in is")
+        < readme.index("codex mcp login sensai")
+        < readme.index("tell the person in the person's language the equivalent of:")
+    )
     assert "Never use a skill installer" in readme
     assert "Never ask the person to greet Sensai manually." in readme
     assert "Never ask the person to introduce themselves." in readme

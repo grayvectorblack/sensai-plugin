@@ -42,15 +42,17 @@ private from the person.
 ## Platform boundary
 
 Codex loads a newly installed plugin in a fresh task. Before creating or offering that task, the
-installing agent tells the person: "Google sign-in is needed to connect Sensai to this Codex
-session." It then completes Sensai's native Google sign-in while the installer chat is still active.
-It keeps the real login operation alive, lets the person handle only Google's browser consent, and
+installing agent tells the person in the person's language that Google sign-in is needed to connect
+Sensai to this Codex session. It then completes Sensai's native Google sign-in while the installer chat is still active.
+It runs `codex mcp login sensai` once and never opens the authorization URL manually. It keeps the
+real login operation alive, lets the person handle only Google's browser consent, and
 waits for success. A timeout is real only when the host's login operation reports it.
 
-After sign-in succeeds, Codex tells the person that the Sensai plugin is installed and offers a
-clickable `new chat` link. The link is a documented `codex://new?prompt=...` URL whose decoded
-prompt is `[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the
-human for their role and the five main programs or sites they use at work.` It only fills Codex's
+After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
+installed and offers a clickable `new chat` link in that language. The link is a documented
+`codex://new?prompt=...` URL whose decoded prompt is also in the person's language, starts with
+`[@Sensai](plugin://sensai@sensai)`, and asks Sensai to introduce itself briefly before asking the
+human about their work, up to five common programs or sites, and recurring tasks. It only fills Codex's
 composer; the person presses Enter to send it. Claude Code reloads plugins once in the current
 session, or starts one new session when reload is unavailable; it never does both. The loaded
 context starts with authorization already present and greets Sensai immediately. A second nested

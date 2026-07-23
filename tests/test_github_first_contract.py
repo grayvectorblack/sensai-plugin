@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
@@ -11,10 +10,6 @@ CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai
 CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
 CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
 CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
-CODEX_NEW_CHAT_PROMPT = (
-    "[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the "
-    "human for their role and the five main programs or sites they use at work."
-)
 
 
 def _text_files() -> list[Path]:
@@ -31,10 +26,13 @@ def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff
     assert "Install Sensai https://github.com/grayvectorblack/sensai-plugin" in readme
     assert "[Codex](https://chatgpt.com/download/)" in readme
     assert "[Claude Code](https://claude.ai/download)" in readme
-    assert "Google sign-in is needed to connect Sensai to this Codex session." in normalized
+    assert "tell the person in the person's language that Google sign-in is needed" in normalized
     assert "The link only fills the new-chat composer; it does not send the message." in normalized
     assert "Continue with Sensai and contact Sensai automatically." not in readme
-    assert "That loaded context must contact Sensai immediately with authorization already present." in normalized
+    assert (
+        "That loaded context must contact Sensai immediately with authorization already present."
+        in normalized
+    )
     assert "Install Sensai only through the host's native plugin installation system." in normalized
     assert "Never use a skill installer or copy an internal plugin directory by hand." in normalized
     assert "Do not invent a fallback installation." in normalized
@@ -62,11 +60,13 @@ def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff
         "sign-in yourself." in normalized
     )
     assert normalized.index(
-        "Google sign-in is needed to connect Sensai to this Codex session."
+        "tell the person in the person's language that Google sign-in is needed"
     ) < normalized.index("codex mcp login sensai")
+    assert "Run `codex mcp login sensai` once as one long-running terminal operation." in normalized
+    assert "Do not open the authorization URL manually." in normalized
     assert normalized.index(
         "Do not create or offer a fresh chat before sign-in succeeds."
-    ) < normalized.index("The Sensai plugin is installed. To start using it, open a")
+    ) < normalized.index("tell the person in the person's language the equivalent of:")
     assert "Never ask the person to greet Sensai manually." in normalized
     assert "Never ask the person to introduce themselves." in normalized
     assert "A brief ordinary-language progress acknowledgement is allowed." in normalized
@@ -88,13 +88,11 @@ def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff
     assert "bootstrap" not in readme.lower()
     assert "powershell" not in readme.lower()
 
-    link_start = readme.index("[new chat](") + len("[new chat](")
-    link_end = readme.index(")", link_start)
-    link = readme[link_start:link_end]
-    parsed = urlparse(link)
-    assert parsed.scheme == "codex"
-    assert parsed.netloc == "new"
-    assert parse_qs(parsed.query) == {"prompt": [CODEX_NEW_CHAT_PROMPT]}
+    assert "Make `new chat` a `codex://new?prompt=...` link." in readme
+    assert (
+        "Its visible label and its prepared prompt must be in the person's language too."
+        in normalized
+    )
 
 
 def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
@@ -102,7 +100,8 @@ def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
     normalized = " ".join(spec.split())
 
     assert "> Install Sensai https://github.com/grayvectorblack/sensai-plugin" in spec
-    assert CODEX_NEW_CHAT_PROMPT in normalized
+    assert "offers a clickable `new chat` link in that language" in normalized
+    assert "decoded prompt is also in the person's language" in normalized
     assert "It only fills Codex's composer; the person presses Enter to send it." in normalized
     assert "Continue with Sensai and contact Sensai automatically." not in spec
     for command in (
@@ -119,8 +118,12 @@ def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
         in normalized
     )
     assert normalized.index(
-        "Google sign-in is needed to connect Sensai to this Codex session."
+        "tells the person in the person's language that Google sign-in is needed"
     ) < normalized.index("After sign-in succeeds, Codex tells the person")
+    assert (
+        "runs `codex mcp login sensai` once and never opens the authorization URL manually"
+        in normalized
+    )
 
 
 def test_public_repository_exposes_native_codex_and_claude_marketplaces() -> None:
