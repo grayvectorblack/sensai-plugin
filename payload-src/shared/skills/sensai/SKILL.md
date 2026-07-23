@@ -23,8 +23,8 @@ continue automatically and contact Sensai without waiting for another user messa
 can create a fresh chat or task itself, create it and continue there automatically. Only if the
 platform truly requires the user to start a fresh chat, offer exactly one short copyable
 continuation sentence: `Continue with Sensai and contact Sensai automatically.` Never ask the user
-to greet Sensai manually. Do not include MCP, commands, paths, a plugin version, or transport
-details in that sentence or in a status update.
+to greet Sensai manually. Never ask the user to introduce themselves. Do not include MCP, commands,
+paths, a plugin version, or transport details in that sentence or in a status update.
 
 After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting that asks
 Sensai to introduce itself and explain what it needs next. Authorization may pause this first call;
@@ -42,9 +42,9 @@ code, or credential into chat or local configuration.
 
 While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
 callback or listener, a process, command, path, plugin version, or internal session. Never claim a
-browser opened until navigation is actually observed. The only safe installation status updates
-are that Sensai is being connected or Sensai is ready. Do not ask the user to run commands or
-report `done`.
+browser opened until navigation is actually observed. A brief ordinary-language progress
+acknowledgement is allowed. Keep every progress update free of technical details. Do not ask the
+user to run commands or report `done`.
 
 Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
 their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;

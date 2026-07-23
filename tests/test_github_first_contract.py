@@ -7,8 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRST_CONTACT_SPEC = ROOT / "docs/specs/FIRST-CONTACT-001.md"
 INSTALL_REQUEST = (
     "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
-    "silently, and continue automatically; if a new chat is required, give me one copyable "
-    "continuation sentence."
+    "without technical details, and continue automatically; if a new chat is required, give me "
+    "exactly this copyable sentence: Continue with Sensai and contact Sensai automatically."
 )
 INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 
@@ -36,10 +36,11 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert not INSTALL_REQUEST.startswith("Install ")
     assert "Install the Sensai plugin" not in INSTALL_REQUEST
     assert _sentence_count(INSTALL_REQUEST) == 1
-    assert "follow its installation instructions silently" in INSTALL_REQUEST
+    assert "follow its installation instructions without technical details" in INSTALL_REQUEST
     assert "continue automatically" in INSTALL_REQUEST
     assert (
-        "if a new chat is required, give me one copyable continuation sentence" in INSTALL_REQUEST
+        "if a new chat is required, give me exactly this copyable sentence: "
+        f"{continuation}" in INSTALL_REQUEST
     )
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
@@ -64,11 +65,13 @@ def test_readme_has_one_github_first_install_request() -> None:
         "automatically."
     ) in normalized
     assert (
-        "Only if the platform truly requires the person to start a fresh chat, offer exactly this "
-        "one short copyable continuation sentence:"
+        "Only if the platform truly requires the person to start a fresh chat, offer exactly the "
+        "copyable continuation sentence already provided in the human request and nothing else."
     ) in normalized
     assert normalized.count(continuation) == 1
     assert "Never ask the person to greet Sensai manually." in normalized
+    assert "Never ask the person to introduce themselves." in normalized
+    assert "A brief ordinary-language progress acknowledgement is allowed." in normalized
     assert (
         "Do not include MCP, commands, paths, a plugin version, or transport details in that "
         "sentence or in a status update."
@@ -77,10 +80,7 @@ def test_readme_has_one_github_first_install_request() -> None:
         "Never show the person the plugin manager, internal repository paths, a plugin version, "
         "MCP or transport details, or installation commands."
     ) in normalized
-    assert (
-        "The only safe status updates are that Sensai is being connected or Sensai is ready."
-        in normalized
-    )
+    assert "Keep every progress update free of technical details." in normalized
     assert "Public source:" not in readme
     assert "Privacy:" not in readme
     assert "### Codex" not in readme
@@ -100,10 +100,11 @@ def test_first_contact_spec_uses_the_same_one_sentence_human_request() -> None:
     assert readme.count(INSTALL_REQUEST) == 1
     assert spec.count(INSTALL_REQUEST) == 1
     assert _sentence_count(INSTALL_REQUEST) == 1
-    assert "follow its installation instructions silently" in INSTALL_REQUEST
+    assert "follow its installation instructions without technical details" in INSTALL_REQUEST
     assert "continue automatically" in INSTALL_REQUEST
     assert (
-        "if a new chat is required, give me one copyable continuation sentence" in INSTALL_REQUEST
+        "if a new chat is required, give me exactly this copyable sentence: "
+        "Continue with Sensai and contact Sensai automatically." in INSTALL_REQUEST
     )
 
 

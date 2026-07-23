@@ -7,6 +7,11 @@ SOURCE_SKILL = REPOSITORY_ROOT / "payload-src/shared/skills/sensai/SKILL.md"
 PACKAGED_SKILL = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
 README = REPOSITORY_ROOT / "README.md"
 INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
+INSTALL_REQUEST = (
+    "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
+    "without technical details, and continue automatically; if a new chat is required, give me "
+    "exactly this copyable sentence: Continue with Sensai and contact Sensai automatically."
+)
 
 
 def _normalized_skill() -> str:
@@ -62,10 +67,8 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
         "internal session."
     ) in skill
     assert ("Never claim a browser opened until navigation is actually observed.") in skill
-    assert (
-        "The only safe installation status updates are that Sensai is being connected or Sensai "
-        "is ready."
-    ) in skill
+    assert "A brief ordinary-language progress acknowledgement is allowed." in skill
+    assert "Keep every progress update free of technical details." in skill
     assert "Do not ask the user to run commands or report `done`." in skill
 
 
@@ -87,6 +90,7 @@ def test_first_use_prefers_automatic_activation_and_has_one_safe_handoff() -> No
     ) in skill
     assert skill.count(continuation) == 1
     assert "Never ask the user to greet Sensai manually." in skill
+    assert "Never ask the user to introduce themselves." in skill
     assert (
         "Do not include MCP, commands, paths, a plugin version, or transport details in that "
         "sentence or in a status update."
@@ -109,14 +113,12 @@ def test_native_plugin_installation_has_no_skill_installer_fallback() -> None:
 def test_installation_status_never_exposes_technical_details_to_the_human() -> None:
     skill = _normalized_skill()
 
+    assert "A brief ordinary-language progress acknowledgement is allowed." in skill
     assert (
         "Never show the user a plugin manager, an internal repository path, a plugin version, MCP "
         "or transport details, or an installation command."
     ) in skill
-    assert (
-        "The only safe installation status updates are that Sensai is being connected or Sensai "
-        "is ready."
-    ) in skill
+    assert "Keep every progress update free of technical details." in skill
 
 
 def test_agents_use_compact_english_but_the_human_keeps_their_language() -> None:
@@ -159,11 +161,7 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
 def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     readme = _normalized_readme()
     continuation = "Continue with Sensai and contact Sensai automatically."
-    install_request = (
-        "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation "
-        "instructions silently, and continue automatically; if a new chat is required, give me "
-        "one copyable continuation sentence."
-    )
+    install_request = INSTALL_REQUEST
 
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
@@ -172,16 +170,18 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     assert ", follow " in install_request
     assert not install_request.startswith("Install ")
     assert _sentence_count(install_request) == 1
-    assert "follow its installation instructions silently" in install_request
+    assert "follow its installation instructions without technical details" in install_request
     assert "continue automatically" in install_request
     assert (
-        "if a new chat is required, give me one copyable continuation sentence" in install_request
+        "if a new chat is required, give me exactly this copyable sentence: "
+        f"{continuation}" in install_request
     )
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme
     assert "Never use a skill installer" in readme
     assert "Never ask the person to greet Sensai manually." in readme
+    assert "Never ask the person to introduce themselves." in readme
     assert readme.count(continuation) == 1
 
 
