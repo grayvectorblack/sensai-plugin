@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -7,6 +8,7 @@ SOURCE_SKILL = REPOSITORY_ROOT / "payload-src/shared/skills/sensai/SKILL.md"
 PACKAGED_SKILL = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
 README = REPOSITORY_ROOT / "README.md"
 FIRST_CONTACT_SPEC = REPOSITORY_ROOT / "docs/specs/FIRST-CONTACT-001.md"
+SCENARIO_RELAY_FIXTURE = REPOSITORY_ROOT / "tests/fixtures/scenario_relay_contract.json"
 INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 CONTINUATION = "Continue with Sensai and contact Sensai automatically."
 CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai-plugin"
@@ -66,6 +68,67 @@ def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
     )
     assert "asks Sensai to introduce itself and explain what it needs next" in skill
     assert "Authorization should already be present." in skill
+
+
+def test_first_tell_sensai_call_omits_conversation_id_entirely() -> None:
+    skill = _normalized_skill()
+
+    assert ("On the first `tell_sensai` call, omit `conversation_id` entirely.") in skill
+    assert (
+        "Never send a placeholder such as `new`, an empty string, a label, or an invented ID."
+    ) in skill
+    assert (
+        "Only after the first successful call returns a `conversation_id`, retain that exact UUID "
+        "and pass it on later calls in the same user conversation."
+    ) in skill
+
+
+def test_all_scenario_options_reach_the_human_before_choice() -> None:
+    skill = _normalized_skill()
+
+    assert (
+        "When Sensai returns multiple scenario options and a recommendation, present every "
+        "distinct option and the recommendation to your user before asking them to choose."
+    ) in skill
+    assert (
+        "For the onboarding response with three options, show all three; never collapse the list "
+        "to only the recommended option or choose on the user's behalf."
+    ) in skill
+    assert ("Preserve the user's language and each option's concise meaning.") in skill
+
+
+def test_first_contact_spec_matches_the_id_and_scenario_relay_contracts() -> None:
+    spec = _normalized_spec()
+
+    assert (
+        "The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, "
+        "`new`, a label, or another invented identifier."
+    ) in spec
+    assert (
+        "When Sensai returns the three onboarding scenarios and its recommendation, the user's "
+        "agent relays all three distinct options and the recommendation before asking the person "
+        "to choose."
+    ) in spec
+    assert (
+        "It preserves the person's language and concise meaning, does not reduce the response to "
+        "the recommended option, and never chooses for the person."
+    ) in spec
+
+
+def test_three_option_collapse_fixture_captures_the_live_regression() -> None:
+    fixture = json.loads(SCENARIO_RELAY_FIXTURE.read_text(encoding="utf-8"))
+    response = fixture["sensai_response"]
+    correct = fixture["correct_human_relay"]
+    collapsed = fixture["prior_collapsed_human_relay"]
+
+    options = fixture["required_option_labels"]
+    assert len(options) == 3
+    assert len(set(options)) == 3
+    assert all(label in response for label in options)
+    assert all(label in correct for label in options)
+    assert fixture["recommendation_label"] in response
+    assert fixture["recommendation_label"] in correct
+    assert sum(label in collapsed for label in options) == 1
 
 
 def test_users_agent_handles_native_oauth_without_manual_credential_copying() -> None:

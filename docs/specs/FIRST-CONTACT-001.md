@@ -58,6 +58,10 @@ nested Codex launch is forbidden. A second fresh-context handoff is forbidden in
 The continuation must never be emitted before Google sign-in has confirmed success. The agent never
 asks the person to introduce themselves or greet Sensai manually.
 
+The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, `new`, a label,
+or another invented identifier. After the first successful response, the agent retains the exact
+returned UUID and uses it for later turns in that user conversation.
+
 The platforms may still require the person to approve plugin installation and, once server OAuth is
 available, authorize Sensai in a browser. Those are platform security boundaries, not additional
 Sensai setup commands.
@@ -65,6 +69,11 @@ Sensai setup commands.
 The user's agent performs every other automatable step. It may communicate with Sensai in concise
 English, while communicating with the person in the person's language. Sensai addresses the user's
 agent, not the person directly.
+
+When Sensai returns the three onboarding scenarios and its recommendation, the user's agent relays
+all three distinct options and the recommendation before asking the person to choose. It preserves
+the person's language and concise meaning, does not reduce the response to the recommended option,
+and never chooses for the person.
 
 ## Authorization boundary
 

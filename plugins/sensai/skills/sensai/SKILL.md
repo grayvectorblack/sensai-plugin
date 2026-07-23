@@ -27,6 +27,11 @@ After the plugin is loaded, call `tell_sensai` immediately with a brief, natural
 Sensai to introduce itself and explain what it needs next. Authorization should already be present.
 Do not ask your user for a work scenario before this call.
 
+On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a placeholder such as
+`new`, an empty string, a label, or an invented ID. Only after the first successful call returns a
+`conversation_id`, retain that exact UUID and pass it on later calls in the same user conversation.
+Never reuse it across unrelated conversations.
+
 If authorization is unexpectedly absent, use your host's native MCP sign-in for the installed
 Sensai server as recovery. Run `codex mcp login sensai` as one long-running terminal operation.
 When the terminal tool yields a running session or handle, preserve it and poll that same handle
@@ -57,12 +62,15 @@ Set up external connectors yourself, following Sensai's guidance. Sensai does no
 steps or act in your user's external accounts. Report results to Sensai only when you or your user
 has actually confirmed them; lack of confirmation is not evidence of failure or disconnection.
 
-Retain the `conversation_id` returned by `tell_sensai` for the current user conversation and pass it
-on every subsequent `tell_sensai` call. Never invent an ID or reuse one across unrelated
-conversations. Send relevant replies from your user back to Sensai in the same conversation. During
-discovery, relay the user's factual answer without adding a request to recommend, choose, design, or
-set up one scenario. Let Sensai decide when to ask the next question or present options. Do not ask
-again for information already provided unless Sensai needs clarification.
+Send relevant replies from your user back to Sensai in the same conversation. During discovery,
+relay the user's factual answer without adding a request to recommend, choose, design, or set up one
+scenario. Let Sensai decide when to ask the next question or present options. Do not ask again for
+information already provided unless Sensai needs clarification.
+
+When Sensai returns multiple scenario options and a recommendation, present every distinct option
+and the recommendation to your user before asking them to choose. For the onboarding response with
+three options, show all three; never collapse the list to only the recommended option or choose on
+the user's behalf. Preserve the user's language and each option's concise meaning.
 
 Do not expose transport details, tool names, `conversation_id`, environment variables, tokens, or
 commands to your user. Never show the user a plugin manager, an internal repository path, a plugin

@@ -1,0 +1,11 @@
+{
+  "sensai_response": "1. Automated weekly report. 2. Performance dashboard. 3. Reviewed client-report workflow. Recommendation: option 1.",
+  "correct_human_relay": "1. Automated weekly report. 2. Performance dashboard. 3. Reviewed client-report workflow. Recommendation: option 1. Which do you choose?",
+  "prior_collapsed_human_relay": "1. Automated weekly report. Recommendation: option 1. Shall we choose it?",
+  "required_option_labels": [
+    "1. Automated weekly report",
+    "2. Performance dashboard",
+    "3. Reviewed client-report workflow"
+  ],
+  "recommendation_label": "Recommendation: option 1"
+}

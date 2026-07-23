@@ -79,17 +79,21 @@ def test_public_repository_is_a_ready_codex_marketplace(tmp_path: Path) -> None:
     }
 
 
-def test_skill_requires_conversation_id_continuity() -> None:
+def test_skill_requires_first_call_omission_and_later_conversation_id_continuity() -> None:
     source_skill = REPOSITORY_ROOT / "payload-src" / "shared" / "skills" / "sensai" / "SKILL.md"
     packaged_skill = REPOSITORY_ROOT / "plugins" / "sensai" / "skills" / "sensai" / "SKILL.md"
-    required_rule = (
-        "Retain the `conversation_id` returned by `tell_sensai` for the current user conversation "
-        "and pass it on every subsequent `tell_sensai` call. Never invent an ID or reuse one "
-        "across unrelated conversations."
+    first_call_rule = (
+        "On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a "
+        "placeholder such as `new`, an empty string, a label, or an invented ID."
+    )
+    later_call_rule = (
+        "Only after the first successful call returns a `conversation_id`, retain that exact UUID "
+        "and pass it on later calls in the same user conversation."
     )
 
     normalized_skill = " ".join(source_skill.read_text(encoding="utf-8").split())
-    assert required_rule in normalized_skill
+    assert first_call_rule in normalized_skill
+    assert later_call_rule in normalized_skill
     assert packaged_skill.read_bytes() == source_skill.read_bytes()
 
 
