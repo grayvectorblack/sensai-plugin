@@ -4,10 +4,13 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+FIRST_CONTACT_SPEC = ROOT / "docs/specs/FIRST-CONTACT-001.md"
 INSTALL_REQUEST = (
-    "Open https://github.com/grayvectorblack/sensai-plugin and follow its installation "
-    "instructions."
+    "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
+    "silently, and continue automatically; if a new chat is required, give me one copyable "
+    "continuation sentence."
 )
+INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 
 
 def _text_files() -> list[Path]:
@@ -17,6 +20,11 @@ def _text_files() -> list[Path]:
     return files
 
 
+def _sentence_count(text: str) -> int:
+    without_url = text.replace(INSTALL_URL, "URL")
+    return sum(without_url.count(mark) for mark in ".!?")
+
+
 def test_readme_has_one_github_first_install_request() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     normalized = " ".join(readme.split())
@@ -24,9 +32,15 @@ def test_readme_has_one_github_first_install_request() -> None:
 
     assert readme.count(INSTALL_REQUEST) == 1
     assert INSTALL_REQUEST.startswith("Open ")
-    assert " and follow " in INSTALL_REQUEST
+    assert ", follow " in INSTALL_REQUEST
     assert not INSTALL_REQUEST.startswith("Install ")
     assert "Install the Sensai plugin" not in INSTALL_REQUEST
+    assert _sentence_count(INSTALL_REQUEST) == 1
+    assert "follow its installation instructions silently" in INSTALL_REQUEST
+    assert "continue automatically" in INSTALL_REQUEST
+    assert (
+        "if a new chat is required, give me one copyable continuation sentence" in INSTALL_REQUEST
+    )
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
     assert "## After installation (AI agent)" in readme
@@ -77,6 +91,20 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert "one-time code" not in readme.lower()
     assert "bootstrap" not in readme.lower()
     assert "powershell" not in readme.lower()
+
+
+def test_first_contact_spec_uses_the_same_one_sentence_human_request() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    spec = FIRST_CONTACT_SPEC.read_text(encoding="utf-8")
+
+    assert readme.count(INSTALL_REQUEST) == 1
+    assert spec.count(INSTALL_REQUEST) == 1
+    assert _sentence_count(INSTALL_REQUEST) == 1
+    assert "follow its installation instructions silently" in INSTALL_REQUEST
+    assert "continue automatically" in INSTALL_REQUEST
+    assert (
+        "if a new chat is required, give me one copyable continuation sentence" in INSTALL_REQUEST
+    )
 
 
 def test_public_repository_exposes_native_codex_and_claude_marketplaces() -> None:

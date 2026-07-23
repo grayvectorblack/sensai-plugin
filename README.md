@@ -14,7 +14,7 @@ Connector setup also happens locally. The person completes any authorization or 
 This is the person's only action:
 
 ```text
-Open https://github.com/grayvectorblack/sensai-plugin and follow its installation instructions.
+Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions silently, and continue automatically; if a new chat is required, give me one copyable continuation sentence.
 ```
 
 ## After installation (AI agent)

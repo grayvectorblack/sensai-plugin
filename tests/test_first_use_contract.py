@@ -6,6 +6,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_SKILL = REPOSITORY_ROOT / "payload-src/shared/skills/sensai/SKILL.md"
 PACKAGED_SKILL = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
 README = REPOSITORY_ROOT / "README.md"
+INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 
 
 def _normalized_skill() -> str:
@@ -14,6 +15,11 @@ def _normalized_skill() -> str:
 
 def _normalized_readme() -> str:
     return " ".join(README.read_text(encoding="utf-8").split())
+
+
+def _sentence_count(text: str) -> int:
+    without_url = text.replace(INSTALL_URL, "URL")
+    return sum(without_url.count(mark) for mark in ".!?")
 
 
 def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
@@ -154,16 +160,23 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     readme = _normalized_readme()
     continuation = "Continue with Sensai and contact Sensai automatically."
     install_request = (
-        "Open https://github.com/grayvectorblack/sensai-plugin and follow its installation "
-        "instructions."
+        "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation "
+        "instructions silently, and continue automatically; if a new chat is required, give me "
+        "one copyable continuation sentence."
     )
 
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
     assert readme.count(install_request) == 1
     assert install_request.startswith("Open ")
-    assert " and follow " in install_request
+    assert ", follow " in install_request
     assert not install_request.startswith("Install ")
+    assert _sentence_count(install_request) == 1
+    assert "follow its installation instructions silently" in install_request
+    assert "continue automatically" in install_request
+    assert (
+        "if a new chat is required, give me one copyable continuation sentence" in install_request
+    )
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme
