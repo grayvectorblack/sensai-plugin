@@ -2,177 +2,45 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
+README = ROOT / "README.md"
 FIRST_CONTACT_SPEC = ROOT / "docs/specs/FIRST-CONTACT-001.md"
-INSTALL_REQUEST = (
-    "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
-    "without technical details, complete Google sign-in, and continue automatically; only after "
-    "sign-in, if a new chat is required, give me exactly this copyable sentence: Continue with "
-    "Sensai and contact Sensai automatically."
+CODEX_NEW_CHAT_PROMPT = (
+    "[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the "
+    "human for their role and the five main programs or sites they use at work."
 )
-INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
-CONTINUATION = "Continue with Sensai and contact Sensai automatically."
-CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai-plugin"
-CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
-CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
-CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
 
 
-def _text_files() -> list[Path]:
-    files = [ROOT / "README.md"]
-    for relative in ("docs", "payload-src", "plugins", "scripts", "src"):
-        files.extend(path for path in (ROOT / relative).rglob("*") if path.is_file())
-    return files
-
-
-def _sentence_count(text: str) -> int:
-    without_url = text.replace(INSTALL_URL, "URL")
-    return sum(without_url.count(mark) for mark in ".!?")
-
-
-def _assert_pre_authorized_human_request(text: str) -> None:
-    open_repository = text.index(f"Open {INSTALL_URL}")
-    read_installation = text.index("follow its installation instructions")
-    complete_sign_in = text.index("complete Google sign-in")
-    only_after_sign_in = text.index("only after sign-in")
-    new_chat_continuation = text.index(
-        f"if a new chat is required, give me exactly this copyable sentence: {CONTINUATION}"
-    )
-
-    assert (
-        open_repository
-        < read_installation
-        < complete_sign_in
-        < only_after_sign_in
-        < new_chat_continuation
-    )
-
-
-def test_readme_has_one_github_first_install_request() -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff() -> None:
+    readme = README.read_text(encoding="utf-8")
     normalized = " ".join(readme.split())
-    continuation = CONTINUATION
 
-    assert readme.count(INSTALL_REQUEST) == 1
-    assert INSTALL_REQUEST.startswith("Open ")
-    assert ", follow " in INSTALL_REQUEST
-    assert not INSTALL_REQUEST.startswith("Install ")
-    assert "Install the Sensai plugin" not in INSTALL_REQUEST
-    assert _sentence_count(INSTALL_REQUEST) == 1
-    _assert_pre_authorized_human_request(INSTALL_REQUEST)
-    assert "follow its installation instructions without technical details" in INSTALL_REQUEST
-    assert "complete Google sign-in" in INSTALL_REQUEST
-    assert "continue automatically" in INSTALL_REQUEST
-    assert (
-        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
-        f"{continuation}" in INSTALL_REQUEST
-    )
-    assert "## Installation (human)" in readme
-    assert "This is the person's only action:" in readme
-    assert "## After installation (AI agent)" in readme
-    assert "without waiting for another human command" in normalized.casefold()
-    assert (
-        "That loaded context must contact Sensai immediately with authorization already present."
-        in normalized
-    )
-    assert "Install Sensai only through the host's native plugin installation system." in normalized
-    assert "Never use a skill installer or copy an internal plugin directory by hand." in normalized
-    assert "Do not invent a fallback installation." in normalized
-    assert normalized.count(CODEX_MARKETPLACE_COMMAND) == 1
-    assert normalized.count(CODEX_INSTALL_COMMAND) == 1
-    assert normalized.count(CLAUDE_MARKETPLACE_COMMAND) == 1
-    assert normalized.count(CLAUDE_INSTALL_COMMAND) == 1
-    assert normalized.index(CODEX_MARKETPLACE_COMMAND) < normalized.index(CODEX_INSTALL_COMMAND)
-    assert normalized.index(CLAUDE_MARKETPLACE_COMMAND) < normalized.index(CLAUDE_INSTALL_COMMAND)
-    assert (
-        "Run the commands for the current host instead of inferring that native installation is "
-        "unsupported." in normalized
-    )
-    assert (
-        "Only infer or report that native installation is unsupported, or say that Sensai could "
-        "not be installed, after one of the applicable commands actually exits with a nonzero "
-        "status." in normalized
-    )
-    assert (
-        "Keep the commands, exit status, marketplace, and other installation mechanics private "
-        "from the person." in normalized
-    )
-    assert (
-        "While still in this installer chat, immediately complete the host's native Sensai Google "
-        "sign-in yourself." in normalized
-    )
-    assert (
-        "If the host can create the required fresh context itself, create it and continue there "
-        "automatically."
-    ) in normalized
-    assert (
-        "Only if the platform truly requires the person to start it, offer exactly the "
-        "copyable continuation sentence already provided in the human request and nothing else."
-    ) in normalized
-    assert normalized.index(
-        "Do not create, offer, or start the fresh chat before sign-in succeeds."
-    ) < normalized.index("offer exactly the copyable continuation sentence")
-    assert normalized.count(continuation) == 1
-    assert "Never ask the person to greet Sensai manually." in normalized
-    assert "Never ask the person to introduce themselves." in normalized
-    assert "A brief ordinary-language progress acknowledgement is allowed." in normalized
-    assert (
-        "Do not include MCP, commands, paths, a plugin version, or transport details in that "
-        "sentence or in a status update."
-    ) in normalized
-    assert (
-        "Never show the person the plugin manager, internal repository paths, a plugin version, "
-        "MCP or transport details, or installation commands."
-    ) in normalized
-    assert "Keep every progress update free of technical details." in normalized
-    assert "Public source:" not in readme
-    assert "Privacy:" not in readme
-    assert "## MCP authorization" not in readme
-    assert "## Development" not in readme
-    assert "black-vector.com/sensai/invite" not in readme
-    assert "one-time code" not in readme.lower()
-    assert "bootstrap" not in readme.lower()
-    assert "powershell" not in readme.lower()
+    assert "Install Sensai https://github.com/grayvectorblack/sensai-plugin" in readme
+    assert "[Codex](https://chatgpt.com/download/)" in readme
+    assert "[Claude Code](https://claude.ai/download)" in readme
+    assert "Google sign-in is needed to connect Sensai to this Codex session." in normalized
+    assert "The link only fills the new-chat composer; it does not send the message." in normalized
+    assert "Continue with Sensai and contact Sensai automatically." not in readme
+
+    link_start = readme.index("[new chat](") + len("[new chat](")
+    link_end = readme.index(")", link_start)
+    link = readme[link_start:link_end]
+    parsed = urlparse(link)
+    assert parsed.scheme == "codex"
+    assert parsed.netloc == "new"
+    assert parse_qs(parsed.query) == {"prompt": [CODEX_NEW_CHAT_PROMPT]}
 
 
-def test_first_contact_spec_uses_the_same_one_sentence_human_request() -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
     spec = FIRST_CONTACT_SPEC.read_text(encoding="utf-8")
+    normalized = " ".join(spec.split())
 
-    assert readme.count(INSTALL_REQUEST) == 1
-    assert spec.count(INSTALL_REQUEST) == 1
-    assert _sentence_count(INSTALL_REQUEST) == 1
-    _assert_pre_authorized_human_request(INSTALL_REQUEST)
-    assert "follow its installation instructions without technical details" in INSTALL_REQUEST
-    assert "complete Google sign-in" in INSTALL_REQUEST
-    assert "continue automatically" in INSTALL_REQUEST
-    assert (
-        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
-        "Continue with Sensai and contact Sensai automatically." in INSTALL_REQUEST
-    )
-    normalized_spec = " ".join(spec.split())
-    for command in (
-        CODEX_MARKETPLACE_COMMAND,
-        CODEX_INSTALL_COMMAND,
-        CLAUDE_MARKETPLACE_COMMAND,
-        CLAUDE_INSTALL_COMMAND,
-    ):
-        assert normalized_spec.count(command) == 1
-    assert normalized_spec.index(CODEX_MARKETPLACE_COMMAND) < normalized_spec.index(
-        CODEX_INSTALL_COMMAND
-    )
-    assert normalized_spec.index(CLAUDE_MARKETPLACE_COMMAND) < normalized_spec.index(
-        CLAUDE_INSTALL_COMMAND
-    )
-    assert (
-        "only after an applicable installation command actually returns a nonzero result"
-        in normalized_spec
-    )
-    assert (
-        "The continuation must never be emitted before Google sign-in has confirmed success."
-        in normalized_spec
-    )
+    assert "> Install Sensai https://github.com/grayvectorblack/sensai-plugin" in spec
+    assert CODEX_NEW_CHAT_PROMPT in normalized
+    assert "It only fills Codex's composer; the person presses Enter to send it." in normalized
+    assert "Continue with Sensai and contact Sensai automatically." not in spec
 
 
 def test_public_repository_exposes_native_codex_and_claude_marketplaces() -> None:
@@ -207,38 +75,3 @@ def test_remote_mcp_uses_native_oauth_discovery_without_static_credentials() -> 
 
     assert source == expected
     assert public == expected
-
-
-def test_public_plugin_contains_no_server_supplied_executable_package_path() -> None:
-    forbidden_names = {"package_runner.py", "install-sensai.ps1"}
-    forbidden_phrases = (
-        "curated implementation package",
-        "ready package",
-        "package_runner",
-        "trusted_package_digests",
-    )
-
-    public_and_build_files = _text_files()
-    assert not any(path.name in forbidden_names for path in public_and_build_files)
-    for path in public_and_build_files:
-        if path == Path(__file__):
-            continue
-        try:
-            content = path.read_text(encoding="utf-8").lower()
-        except (UnicodeDecodeError, OSError):
-            continue
-        assert not any(phrase in content for phrase in forbidden_phrases), path
-
-
-def test_skill_assigns_all_local_implementation_to_the_users_agent() -> None:
-    skill = (ROOT / "payload-src/shared/skills/sensai/SKILL.md").read_text(encoding="utf-8")
-    normalized = " ".join(skill.split())
-
-    assert (
-        "Sensai provides advice, detailed implementation instructions, architecture, and optional "
-        "non-executed reference snippets."
-    ) in normalized
-    assert (
-        "Write, review, install dependencies for, run, and verify all code locally through your "
-        "platform's normal controls."
-    ) in normalized

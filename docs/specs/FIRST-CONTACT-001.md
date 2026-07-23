@@ -4,15 +4,12 @@
 
 The supported journey starts with exactly one natural request:
 
-> Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions without technical details, complete Google sign-in, and continue automatically; only after sign-in, if a new chat is required, give me exactly this copyable sentence: Continue with Sensai and contact Sensai automatically.
+> Install Sensai https://github.com/grayvectorblack/sensai-plugin
 
-The request first directs the installing agent to the transparent public README instead of choosing
-an installer in advance. In the same sentence, it requires the agent to keep installation mechanics
-private, complete Google sign-in, and continue automatically. Only after confirmed sign-in may it
-offer the single fresh-chat continuation. The agent then detects Codex versus Claude Code and
-completes these steps in strict order: native plugin installation, native Google sign-in in the
-installer chat, exactly one fresh task, session, or reload boundary, and the first `tell_sensai`
-call.
+The request directs the installing agent to the transparent public README instead of choosing an
+installer in advance. The agent then detects Codex versus Claude Code and completes these steps in
+strict order: native plugin installation, native Google sign-in in the installer chat, exactly one
+fresh task, session, or reload boundary, and the first `tell_sensai` call.
 
 A brief ordinary-language acknowledgement is allowed while installation is in progress. It must
 not expose commands, paths, versions, a plugin manager, MCP, transport, or other installation
@@ -45,18 +42,20 @@ private from the person.
 ## Platform boundary
 
 Codex loads a newly installed plugin in a fresh task. Before creating or offering that task, the
-installing agent completes Sensai's native Google sign-in while the installer chat is still active.
+installing agent tells the person: "Google sign-in is needed to connect Sensai to this Codex
+session." It then completes Sensai's native Google sign-in while the installer chat is still active.
 It keeps the real login operation alive, lets the person handle only Google's browser consent, and
 waits for success. A timeout is real only when the host's login operation reports it.
 
-After sign-in succeeds, Codex creates exactly one fresh task. Claude Code reloads plugins once in
-the current session, or starts exactly one new session when reload is unavailable; it never does
-both. Only when the platform requires the person to start that fresh context does the agent provide
-the exact safe continuation sentence from the original request and no other setup request. The
-loaded context starts with authorization already present and greets Sensai immediately. A second
-nested Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path.
-The continuation must never be emitted before Google sign-in has confirmed success. The agent never
-asks the person to introduce themselves or greet Sensai manually.
+After sign-in succeeds, Codex tells the person that the Sensai plugin is installed and offers a
+clickable `new chat` link. The link is a documented `codex://new?prompt=...` URL whose decoded
+prompt is `[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the
+human for their role and the five main programs or sites they use at work.` It only fills Codex's
+composer; the person presses Enter to send it. Claude Code reloads plugins once in the current
+session, or starts one new session when reload is unavailable; it never does both. The loaded
+context starts with authorization already present and greets Sensai immediately. A second nested
+Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The
+agent never asks the person to introduce themselves or greet Sensai manually.
 
 The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, `new`, a label,
 or another invented identifier. After the first successful response, the agent retains the exact

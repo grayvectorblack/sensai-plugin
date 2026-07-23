@@ -11,7 +11,7 @@ Connector setup also happens locally. The person completes any authorization or 
 
 ## Installation (if you are human)
 
-1. You need Codex with an OpenAI subscription, or Claude Code with an Anthropic subscription.
+1. You need [Codex](https://chatgpt.com/download/) with an OpenAI subscription, or [Claude Code](https://claude.ai/download) with an Anthropic subscription.
 2. Start a new chat with this instruction:
 
 ```text
@@ -44,8 +44,9 @@ applicable commands actually exits with a nonzero status. Do not invent a fallba
 Keep the commands, exit status, marketplace, and other installation mechanics private from the
 person.
 
-While still in this installer chat, immediately complete the host's native Sensai Google sign-in
-yourself. Do this before creating, offering, or starting any fresh chat. Run
+Before starting Google sign-in, tell the person: "Google sign-in is needed to connect Sensai to
+this Codex session." While still in this installer chat, immediately complete the host's native
+Sensai Google sign-in yourself. Do this before creating, offering, or starting any fresh chat. Run
 `codex mcp login sensai` as one long-running terminal operation. When the terminal tool yields a
 running session or handle, preserve it and poll that same handle every 5-10 seconds until the
 command actually exits or reports its native five-minute timeout. An empty poll or a poll with no
@@ -56,13 +57,13 @@ terminal-wait mechanism private from the person. Retry only after that operation
 timeout. The person handles only Google's browser account selection and consent; never ask them to
 run a command, copy a URL, code, token, or credential, or report that they are done.
 
-Do not create, offer, or start the fresh chat before sign-in succeeds. Only after sign-in succeeds,
-load Sensai once: use one fresh task in Codex; in Claude Code, run `/reload-plugins` once or start
-one new session when reload is unavailable, never both. If the host can create the required fresh
-context itself, create it and continue there automatically. Only if the platform truly requires
-the person to start it, offer exactly this copyable continuation sentence and nothing else:
-`Continue with Sensai and contact Sensai automatically.` The normal installation path has exactly
-one fresh-context boundary and never starts a nested Codex process.
+Do not create or offer a fresh chat before sign-in succeeds. Only after sign-in succeeds, load
+Sensai once: in Codex, tell the person "The Sensai plugin is installed. To start using it, open a
+[new chat](codex://new?prompt=%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29%20Start%20Sensai.%20Introduce%20yourself%20briefly%2C%20then%20ask%20the%20human%20for%20their%20role%20and%20the%20five%20main%20programs%20or%20sites%20they%20use%20at%20work.).
+Then press Enter to send the prepared message." The link only fills the new-chat composer; it does
+not send the message. In Claude Code, run `/reload-plugins` once or start one new session when
+reload is unavailable, never both. The normal installation path has exactly one fresh-context
+boundary and never starts a nested Codex process.
 
 That loaded context must contact Sensai immediately with authorization already present. Send a
 brief, natural greeting asking Sensai to introduce itself and explain what it needs next, without

@@ -9,20 +9,21 @@ PACKAGED_SKILL = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
 README = REPOSITORY_ROOT / "README.md"
 FIRST_CONTACT_SPEC = REPOSITORY_ROOT / "docs/specs/FIRST-CONTACT-001.md"
 SCENARIO_RELAY_FIXTURE = REPOSITORY_ROOT / "tests/fixtures/scenario_relay_contract.json"
-INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
-CONTINUATION = "Continue with Sensai and contact Sensai automatically."
+CODEX_DOWNLOAD_URL = "https://chatgpt.com/download/"
+CLAUDE_CODE_DOWNLOAD_URL = "https://claude.ai/download"
+CODEX_NEW_CHAT_PROMPT = (
+    "[@Sensai](plugin://sensai@sensai) Start Sensai. Introduce yourself briefly, then ask the "
+    "human for their role and the five main programs or sites they use at work."
+)
+CODEX_NEW_CHAT_URL = (
+    "codex://new?prompt=%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29%20Start%20Sensai.%20"
+    "Introduce%20yourself%20briefly%2C%20then%20ask%20the%20human%20for%20their%20role%20and%20"
+    "the%20five%20main%20programs%20or%20sites%20they%20use%20at%20work."
+)
 CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai-plugin"
 CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
 CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
 CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
-INSTALL_REQUEST = (
-    "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
-    "without technical details, complete Google sign-in, and continue automatically; only after "
-    "sign-in, if a new chat is required, give me exactly this copyable sentence: "
-    f"{CONTINUATION}"
-)
-
-
 def _normalized_skill() -> str:
     return " ".join(SOURCE_SKILL.read_text(encoding="utf-8").split())
 
@@ -33,29 +34,6 @@ def _normalized_readme() -> str:
 
 def _normalized_spec() -> str:
     return " ".join(FIRST_CONTACT_SPEC.read_text(encoding="utf-8").split())
-
-
-def _sentence_count(text: str) -> int:
-    without_url = text.replace(INSTALL_URL, "URL")
-    return sum(without_url.count(mark) for mark in ".!?")
-
-
-def _assert_pre_authorized_human_request(text: str) -> None:
-    open_repository = text.index(f"Open {INSTALL_URL}")
-    read_installation = text.index("follow its installation instructions")
-    complete_sign_in = text.index("complete Google sign-in")
-    only_after_sign_in = text.index("only after sign-in")
-    new_chat_continuation = text.index(
-        f"if a new chat is required, give me exactly this copyable sentence: {CONTINUATION}"
-    )
-
-    assert (
-        open_repository
-        < read_installation
-        < complete_sign_in
-        < only_after_sign_in
-        < new_chat_continuation
-    )
 
 
 def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
@@ -173,7 +151,7 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
     assert "Do not ask the user to run commands or report `done`." in skill
 
 
-def test_normal_install_orders_authorization_before_the_single_fresh_chat() -> None:
+def test_normal_install_orders_authorization_before_the_codex_new_chat_link() -> None:
     readme = _normalized_readme()
     codex_marketplace = readme.index(CODEX_MARKETPLACE_COMMAND)
     codex_install = readme.index(CODEX_INSTALL_COMMAND)
@@ -183,20 +161,21 @@ def test_normal_install_orders_authorization_before_the_single_fresh_chat() -> N
         "While still in this installer chat, immediately complete the host's native Sensai "
         "Google sign-in yourself."
     )
-    fresh_context = readme.index("Only after sign-in succeeds, load Sensai once:")
-    first_call = readme.index(
-        "That loaded context must contact Sensai immediately with authorization already present."
-    )
+    fresh_context = readme.index("Do not create or offer a fresh chat before sign-in succeeds.")
+    new_chat_link = readme.index(CODEX_NEW_CHAT_URL)
 
     assert codex_marketplace < codex_install < authorize
     assert claude_marketplace < claude_install < authorize
-    assert authorize < fresh_context < first_call
-    assert "Do not create, offer, or start the fresh chat before sign-in succeeds." in readme
+    assert authorize < fresh_context < new_chat_link
+    assert "Google sign-in is needed to connect Sensai to this Codex session." in readme
+    assert "The Sensai plugin is installed. To start using it, open a" in readme
+    assert f"[new chat]({CODEX_NEW_CHAT_URL})" in README.read_text(encoding="utf-8")
+    assert "The link only fills the new-chat composer; it does not send the message." in readme
     assert (
         "The normal installation path has exactly one fresh-context boundary and never starts a "
         "nested Codex process."
     ) in readme
-    assert readme.count(CONTINUATION) == 1
+    assert "Continue with Sensai and contact Sensai automatically." not in readme
 
 
 def test_readme_requires_real_native_install_commands_before_reporting_unsupported() -> None:
@@ -229,7 +208,7 @@ def test_readme_requires_real_native_install_commands_before_reporting_unsupport
     assert "Never use a skill installer" in readme
 
 
-def test_first_contact_spec_enforces_the_same_one_chat_order() -> None:
+def test_first_contact_spec_enforces_the_same_codex_new_chat_order() -> None:
     spec = _normalized_spec()
     codex_marketplace = spec.index(CODEX_MARKETPLACE_COMMAND)
     codex_install = spec.index(CODEX_INSTALL_COMMAND)
@@ -237,9 +216,9 @@ def test_first_contact_spec_enforces_the_same_one_chat_order() -> None:
     claude_install = spec.index(CLAUDE_INSTALL_COMMAND)
     last_install = max(codex_install, claude_install)
     authorize = spec.index(
-        "installing agent completes Sensai's native Google sign-in", last_install
+        "It then completes Sensai's native Google sign-in", last_install
     )
-    fresh_context = spec.index("After sign-in succeeds", authorize)
+    fresh_context = spec.index("After sign-in succeeds, Codex tells the person", authorize)
     first_call = spec.index("greets Sensai immediately", fresh_context)
 
     assert codex_marketplace < codex_install < authorize
@@ -248,6 +227,8 @@ def test_first_contact_spec_enforces_the_same_one_chat_order() -> None:
     assert "A second nested Codex launch is forbidden." in spec
     assert "A second fresh-context handoff is forbidden in the normal path." in spec
     assert "only after an applicable installation command actually returns a nonzero result" in spec
+    assert CODEX_NEW_CHAT_PROMPT in spec
+    assert "It only fills Codex's composer; the person presses Enter to send it." in spec
 
 
 def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
@@ -264,10 +245,10 @@ def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
     assert "Never create a second fresh-chat handoff for authorization." in skill
 
 
-def test_first_use_prefers_automatic_activation_and_has_one_safe_handoff() -> None:
+def test_first_use_keeps_one_safe_handoff() -> None:
     skill = _normalized_skill()
     assert "The normal installation flow" in skill
-    assert skill.count(CONTINUATION) == 0
+    assert "Continue with Sensai and contact Sensai automatically." not in skill
     assert "Never ask the user to greet Sensai manually." in skill
     assert "Never ask the user to introduce themselves." in skill
     assert "Never create a second fresh-chat handoff for authorization." in skill
@@ -334,42 +315,23 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
     assert PACKAGED_SKILL.read_bytes() == SOURCE_SKILL.read_bytes()
 
 
-def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
+def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
+    raw_readme = README.read_text(encoding="utf-8")
     readme = _normalized_readme()
-    install_request = INSTALL_REQUEST
 
-    assert "## Installation (human)" in readme
-    assert "This is the person's only action:" in readme
-    assert readme.count(install_request) == 1
-    assert install_request.startswith("Open ")
-    assert ", follow " in install_request
-    assert not install_request.startswith("Install ")
-    assert _sentence_count(install_request) == 1
-    _assert_pre_authorized_human_request(install_request)
-    assert "follow its installation instructions without technical details" in install_request
-    assert "complete Google sign-in" in install_request
-    assert "continue automatically" in install_request
-    assert CODEX_MARKETPLACE_COMMAND not in install_request
-    assert CODEX_INSTALL_COMMAND not in install_request
-    assert CLAUDE_MARKETPLACE_COMMAND not in install_request
-    assert CLAUDE_INSTALL_COMMAND not in install_request
-    assert (
-        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
-        f"{CONTINUATION}" in install_request
-    )
-    assert "## After installation (AI agent)" in readme
-    assert "without waiting for another human command" in readme.casefold()
+    assert "## Installation (if you are human)" in raw_readme
+    assert f"[Codex]({CODEX_DOWNLOAD_URL})" in raw_readme
+    assert f"[Claude Code]({CLAUDE_CODE_DOWNLOAD_URL})" in raw_readme
+    assert "Install Sensai https://github.com/grayvectorblack/sensai-plugin" in raw_readme
+    assert "## After installation (if you are an AI agent)" in raw_readme
     assert "complete the host's native Sensai Google sign-in yourself" in readme
-    assert "Do not create, offer, or start the fresh chat before sign-in succeeds." in readme
-    no_early_handoff = readme.index(
-        "Do not create, offer, or start the fresh chat before sign-in succeeds."
-    )
-    continuation_handoff = readme.index("offer exactly the copyable continuation sentence")
-    assert no_early_handoff < continuation_handoff
+    assert "Google sign-in is needed to connect Sensai to this Codex session." in readme
+    assert f"[new chat]({CODEX_NEW_CHAT_URL})" in raw_readme
+    assert "Then press Enter to send the prepared message." in readme
+    assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
     assert "Never use a skill installer" in readme
     assert "Never ask the person to greet Sensai manually." in readme
     assert "Never ask the person to introduce themselves." in readme
-    assert readme.count(CONTINUATION) == 1
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
