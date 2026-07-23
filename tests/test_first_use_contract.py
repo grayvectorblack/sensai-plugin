@@ -57,16 +57,60 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
     ) in skill
     assert ("Never claim a browser opened until navigation is actually observed.") in skill
     assert (
-        "A safe update is simply that Sensai is being connected and Google sign-in may appear."
+        "The only safe installation status updates are that Sensai is being connected or Sensai "
+        "is ready."
     ) in skill
     assert "Do not ask the user to run commands or report `done`." in skill
 
 
-def test_first_use_requires_no_second_human_command() -> None:
+def test_first_use_prefers_automatic_activation_and_has_one_safe_handoff() -> None:
+    skill = _normalized_skill()
+    continuation = "Continue with Sensai and contact Sensai automatically."
+
+    assert (
+        "After successful installation, if the host can load or activate the plugin in the current "
+        "chat, continue automatically and contact Sensai without waiting for another user message."
+    ) in skill
+    assert (
+        "If the host can create a fresh chat or task itself, create it and continue there "
+        "automatically."
+    ) in skill
+    assert (
+        "Only if the platform truly requires the user to start a fresh chat, offer exactly one "
+        f"short copyable continuation sentence: `{continuation}`"
+    ) in skill
+    assert skill.count(continuation) == 1
+    assert "Never ask the user to greet Sensai manually." in skill
+    assert (
+        "Do not include MCP, commands, paths, a plugin version, or transport details in that "
+        "sentence or in a status update."
+    ) in skill
+
+
+def test_native_plugin_installation_has_no_skill_installer_fallback() -> None:
     skill = _normalized_skill()
 
-    assert "Do not use a fixed setup phrase" in skill
-    assert "require your user to type another command" in skill
+    assert "Native plugin installation is the only supported installation path." in skill
+    assert "Never use a skill installer" in skill
+    assert "do not copy files from an internal repository path" in skill
+    assert (
+        "If native plugin installation is unavailable, say plainly that Sensai could not be "
+        "installed and stop."
+    ) in skill
+    assert "Do not invent a fallback installation." in skill
+
+
+def test_installation_status_never_exposes_technical_details_to_the_human() -> None:
+    skill = _normalized_skill()
+
+    assert (
+        "Never show the user a plugin manager, an internal repository path, a plugin version, MCP "
+        "or transport details, or an installation command."
+    ) in skill
+    assert (
+        "The only safe installation status updates are that Sensai is being connected or Sensai "
+        "is ready."
+    ) in skill
 
 
 def test_agents_use_compact_english_but_the_human_keeps_their_language() -> None:
@@ -108,14 +152,19 @@ def test_public_marketplace_contains_the_exact_first_use_contract() -> None:
 
 def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     readme = _normalized_readme()
+    continuation = "Continue with Sensai and contact Sensai automatically."
 
     assert "## Installation (human)" in readme
     assert "This is the person's only action:" in readme
-    assert "Install Sensai from https://github.com/grayvectorblack/sensai-plugin" in readme
+    assert (
+        "Install the Sensai plugin from https://github.com/grayvectorblack/sensai-plugin" in readme
+    )
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "starts native sign-in if needed and returns the next instruction" in readme
-    assert "Before ending the installation turn" in readme
+    assert "Never use a skill installer" in readme
+    assert "Never ask the person to greet Sensai manually." in readme
+    assert readme.count(continuation) == 1
 
 
 def test_readme_does_not_start_with_a_marketing_routine() -> None:
