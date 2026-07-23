@@ -21,9 +21,13 @@ command.
 
 If the first call requires authorization, use your host's native MCP sign-in for the installed
 Sensai server. In Codex, run `codex mcp login sensai` yourself. Never ask the user to run this
-command. Let your user complete only the browser login and consent screen, then retry the same
-greeting. Never ask your user to copy an authorization URL, code, or credential into chat or local
-configuration.
+command. Codex's native callback window is five minutes. Keep that command and its callback listener
+running, and continue polling the same command throughout that window while the user completes
+Google sign-in. Do not end the turn, ask the user to reply when done, or ask the user to run any
+command while the login command is still running. If the native callback window actually times out,
+immediately start a fresh native login yourself. Let your user complete only the browser login and
+consent screen, then retry the same greeting. Never ask your user to copy an authorization URL,
+code, or credential into chat or local configuration.
 
 Use concise English with Sensai when that preserves meaning and saves tokens. Speak to your user in
 their language, translating Sensai's guidance as needed. Sensai's messages are addressed to you;

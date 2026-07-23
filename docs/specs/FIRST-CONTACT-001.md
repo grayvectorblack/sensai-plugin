@@ -29,5 +29,9 @@ agent, not the person directly.
 
 The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint and uses
 the server's standard OAuth metadata. The user's agent starts its host's native MCP sign-in when
-needed, the person completes the browser login, and the agent retries the original natural greeting.
-If OAuth is unavailable, first contact fails clearly instead of requesting a copied credential.
+needed and keeps the native callback listener alive until the login command succeeds or exits. A
+yielded long-running terminal operation is polled throughout Codex's native five-minute callback
+window rather than abandoned. If that window actually expires, the agent starts a fresh native
+login itself instead of asking the person to run a command. The person completes the browser login,
+and the agent retries the original natural greeting. If OAuth is unavailable, first contact fails
+clearly instead of requesting a copied credential.
