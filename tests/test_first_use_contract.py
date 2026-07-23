@@ -11,8 +11,9 @@ INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
 CONTINUATION = "Continue with Sensai and contact Sensai automatically."
 INSTALL_REQUEST = (
     "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
-    "without technical details, and continue automatically; if a new chat is required, give me "
-    f"exactly this copyable sentence: {CONTINUATION}"
+    "without technical details, complete Google sign-in, and continue automatically; only after "
+    "sign-in, if a new chat is required, give me exactly this copyable sentence: "
+    f"{CONTINUATION}"
 )
 
 
@@ -31,6 +32,24 @@ def _normalized_spec() -> str:
 def _sentence_count(text: str) -> int:
     without_url = text.replace(INSTALL_URL, "URL")
     return sum(without_url.count(mark) for mark in ".!?")
+
+
+def _assert_pre_authorized_human_request(text: str) -> None:
+    open_repository = text.index(f"Open {INSTALL_URL}")
+    read_installation = text.index("follow its installation instructions")
+    complete_sign_in = text.index("complete Google sign-in")
+    only_after_sign_in = text.index("only after sign-in")
+    new_chat_continuation = text.index(
+        f"if a new chat is required, give me exactly this copyable sentence: {CONTINUATION}"
+    )
+
+    assert (
+        open_repository
+        < read_installation
+        < complete_sign_in
+        < only_after_sign_in
+        < new_chat_continuation
+    )
 
 
 def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
@@ -208,15 +227,23 @@ def test_readme_hands_off_from_the_person_to_the_installed_agent() -> None:
     assert ", follow " in install_request
     assert not install_request.startswith("Install ")
     assert _sentence_count(install_request) == 1
+    _assert_pre_authorized_human_request(install_request)
     assert "follow its installation instructions without technical details" in install_request
+    assert "complete Google sign-in" in install_request
     assert "continue automatically" in install_request
     assert (
-        "if a new chat is required, give me exactly this copyable sentence: "
+        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
         f"{CONTINUATION}" in install_request
     )
     assert "## After installation (AI agent)" in readme
     assert "without waiting for another human command" in readme.casefold()
     assert "complete the host's native Sensai Google sign-in yourself" in readme
+    assert "Do not create, offer, or start the fresh chat before sign-in succeeds." in readme
+    no_early_handoff = readme.index(
+        "Do not create, offer, or start the fresh chat before sign-in succeeds."
+    )
+    continuation_handoff = readme.index("offer exactly the copyable continuation sentence")
+    assert no_early_handoff < continuation_handoff
     assert "Never use a skill installer" in readme
     assert "Never ask the person to greet Sensai manually." in readme
     assert "Never ask the person to introduce themselves." in readme

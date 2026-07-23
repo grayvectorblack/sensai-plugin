@@ -4,13 +4,14 @@
 
 The supported journey starts with exactly one natural request:
 
-> Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions without technical details, and continue automatically; if a new chat is required, give me exactly this copyable sentence: Continue with Sensai and contact Sensai automatically.
+> Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions without technical details, complete Google sign-in, and continue automatically; only after sign-in, if a new chat is required, give me exactly this copyable sentence: Continue with Sensai and contact Sensai automatically.
 
 The request first directs the installing agent to the transparent public README instead of choosing
 an installer in advance. In the same sentence, it requires the agent to keep installation mechanics
-private and continue automatically. The agent then detects Codex versus Claude Code and completes
-these steps in strict order: native plugin installation, native Google sign-in in the installer
-chat, exactly one fresh chat, and the first `tell_sensai` call.
+private, complete Google sign-in, and continue automatically. Only after confirmed sign-in may it
+offer the single fresh-chat continuation. The agent then detects Codex versus Claude Code and
+completes these steps in strict order: native plugin installation, native Google sign-in in the
+installer chat, exactly one fresh chat, and the first `tell_sensai` call.
 
 A brief ordinary-language acknowledgement is allowed while installation is in progress. It must
 not expose commands, paths, versions, a plugin manager, MCP, transport, or other installation
@@ -28,7 +29,8 @@ when its host exposes task creation. Only when the platform requires the person 
 context does the agent provide the exact safe continuation sentence from the original request and
 no other setup request. The new chat starts with authorization already present and greets Sensai
 immediately. A second nested Codex launch is forbidden. A second fresh-chat handoff is forbidden in
-the normal path. The agent never asks the person to introduce themselves or greet Sensai manually.
+the normal path. The continuation must never be emitted before Google sign-in has confirmed success.
+The agent never asks the person to introduce themselves or greet Sensai manually.
 
 The platforms may still require the person to approve plugin installation and, once server OAuth is
 available, authorize Sensai in a browser. Those are platform security boundaries, not additional

@@ -7,10 +7,12 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRST_CONTACT_SPEC = ROOT / "docs/specs/FIRST-CONTACT-001.md"
 INSTALL_REQUEST = (
     "Open https://github.com/grayvectorblack/sensai-plugin, follow its installation instructions "
-    "without technical details, and continue automatically; if a new chat is required, give me "
-    "exactly this copyable sentence: Continue with Sensai and contact Sensai automatically."
+    "without technical details, complete Google sign-in, and continue automatically; only after "
+    "sign-in, if a new chat is required, give me exactly this copyable sentence: Continue with "
+    "Sensai and contact Sensai automatically."
 )
 INSTALL_URL = "https://github.com/grayvectorblack/sensai-plugin"
+CONTINUATION = "Continue with Sensai and contact Sensai automatically."
 
 
 def _text_files() -> list[Path]:
@@ -25,10 +27,28 @@ def _sentence_count(text: str) -> int:
     return sum(without_url.count(mark) for mark in ".!?")
 
 
+def _assert_pre_authorized_human_request(text: str) -> None:
+    open_repository = text.index(f"Open {INSTALL_URL}")
+    read_installation = text.index("follow its installation instructions")
+    complete_sign_in = text.index("complete Google sign-in")
+    only_after_sign_in = text.index("only after sign-in")
+    new_chat_continuation = text.index(
+        f"if a new chat is required, give me exactly this copyable sentence: {CONTINUATION}"
+    )
+
+    assert (
+        open_repository
+        < read_installation
+        < complete_sign_in
+        < only_after_sign_in
+        < new_chat_continuation
+    )
+
+
 def test_readme_has_one_github_first_install_request() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     normalized = " ".join(readme.split())
-    continuation = "Continue with Sensai and contact Sensai automatically."
+    continuation = CONTINUATION
 
     assert readme.count(INSTALL_REQUEST) == 1
     assert INSTALL_REQUEST.startswith("Open ")
@@ -36,10 +56,12 @@ def test_readme_has_one_github_first_install_request() -> None:
     assert not INSTALL_REQUEST.startswith("Install ")
     assert "Install the Sensai plugin" not in INSTALL_REQUEST
     assert _sentence_count(INSTALL_REQUEST) == 1
+    _assert_pre_authorized_human_request(INSTALL_REQUEST)
     assert "follow its installation instructions without technical details" in INSTALL_REQUEST
+    assert "complete Google sign-in" in INSTALL_REQUEST
     assert "continue automatically" in INSTALL_REQUEST
     assert (
-        "if a new chat is required, give me exactly this copyable sentence: "
+        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
         f"{continuation}" in INSTALL_REQUEST
     )
     assert "## Installation (human)" in readme
@@ -70,6 +92,9 @@ def test_readme_has_one_github_first_install_request() -> None:
         "Only if the platform truly requires the person to start it, offer exactly the "
         "copyable continuation sentence already provided in the human request and nothing else."
     ) in normalized
+    assert normalized.index(
+        "Do not create, offer, or start the fresh chat before sign-in succeeds."
+    ) < normalized.index("offer exactly the copyable continuation sentence")
     assert normalized.count(continuation) == 1
     assert "Never ask the person to greet Sensai manually." in normalized
     assert "Never ask the person to introduce themselves." in normalized
@@ -102,11 +127,18 @@ def test_first_contact_spec_uses_the_same_one_sentence_human_request() -> None:
     assert readme.count(INSTALL_REQUEST) == 1
     assert spec.count(INSTALL_REQUEST) == 1
     assert _sentence_count(INSTALL_REQUEST) == 1
+    _assert_pre_authorized_human_request(INSTALL_REQUEST)
     assert "follow its installation instructions without technical details" in INSTALL_REQUEST
+    assert "complete Google sign-in" in INSTALL_REQUEST
     assert "continue automatically" in INSTALL_REQUEST
     assert (
-        "if a new chat is required, give me exactly this copyable sentence: "
+        "only after sign-in, if a new chat is required, give me exactly this copyable sentence: "
         "Continue with Sensai and contact Sensai automatically." in INSTALL_REQUEST
+    )
+    normalized_spec = " ".join(spec.split())
+    assert (
+        "The continuation must never be emitted before Google sign-in has confirmed success."
+        in normalized_spec
     )
 
 
