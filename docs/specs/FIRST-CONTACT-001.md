@@ -70,11 +70,15 @@ agent, not the person directly.
 
 The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint and uses
 the server's standard OAuth metadata. The installing agent starts its host's native MCP sign-in
-after native plugin installation and before the fresh chat. It keeps the native callback listener
-alive until the login command succeeds or exits. A yielded long-running terminal operation is
-polled throughout Codex's native five-minute callback window rather than abandoned. If that window
-actually expires, the agent starts a fresh native login itself instead of asking the person to run
-a command. The person completes only the browser login and consent.
+after native plugin installation and before the fresh chat. Run `codex mcp login sensai` as one
+long-running terminal operation. When the terminal tool yields a running session or handle,
+preserve it and poll that same handle every 5-10 seconds until the command actually exits or reports
+its native five-minute timeout. An empty poll or a poll with no new output still means the operation
+is running; it is not completion. Never launch another login, close the process, end the turn, or
+return a final response while that session is alive. Only a real process exit decides whether login
+succeeded or reached its native timeout. Keep this entire terminal-wait mechanism private from the
+person. If that window actually expires, the agent starts a fresh native login itself instead of
+asking the person to run a command. The person completes only the browser login and consent.
 
 If credentials are unexpectedly absent in the fresh chat, the loaded Sensai skill retains the same
 native sign-in recovery. Recovery retries the greeting in the current chat and never starts a

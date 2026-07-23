@@ -72,14 +72,23 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
     skill = _normalized_skill()
 
     assert "use your host's native MCP sign-in for the installed Sensai server" in skill
-    assert "In Codex, run `codex mcp login sensai` yourself" in skill
+    assert "Run `codex mcp login sensai` as one long-running terminal operation." in skill
     assert "Never ask the user to run this command." in skill
-    assert "Codex's native callback window is five minutes." in skill
-    assert "continue polling the same command throughout that window" in skill
     assert (
-        "Do not end the turn, ask the user to reply when done, or ask the user to run any command "
-        "while the login command is still running."
+        "When the terminal tool yields a running session or handle, preserve it and poll that same "
+        "handle every 5-10 seconds until the command actually exits or reports its native "
+        "five-minute timeout."
     ) in skill
+    assert (
+        "An empty poll or a poll with no new output still means the operation is running; it is "
+        "not completion."
+    ) in skill
+    assert (
+        "Never launch another login, close the process, end the turn, or return a final response "
+        "while that session is alive."
+    ) in skill
+    assert "Only a real process exit decides whether login succeeded" in skill
+    assert "Keep this entire terminal-wait mechanism private from the person." in skill
     assert "If the native callback window actually times out" in skill
     assert "immediately start a fresh native login yourself" in skill
     assert "complete only the browser login and consent screen" in skill

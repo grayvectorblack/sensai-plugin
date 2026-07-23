@@ -28,16 +28,19 @@ Sensai to introduce itself and explain what it needs next. Authorization should 
 Do not ask your user for a work scenario before this call.
 
 If authorization is unexpectedly absent, use your host's native MCP sign-in for the installed
-Sensai server as recovery. In Codex, run `codex mcp login sensai` yourself. Never ask the user to
-run this command. Codex's native callback window is five minutes. Keep that command and its callback
-listener running, and continue polling the same command throughout that window while the user
-completes Google sign-in. Do not end the turn, ask the user to reply when done, or ask the user to
-run any command while the login command is still running. If the native callback window actually
-times out, immediately start a fresh native login yourself. Let your user complete only the browser
-login and consent screen, then retry the same greeting in this chat. Never ask your user to copy an
-authorization URL, code, or credential into chat or local configuration. If the host still cannot
-use the completed authorization, explain plainly that Sensai is temporarily unavailable; do not
-start a nested agent or ask for another fresh chat.
+Sensai server as recovery. Run `codex mcp login sensai` as one long-running terminal operation.
+When the terminal tool yields a running session or handle, preserve it and poll that same handle
+every 5-10 seconds until the command actually exits or reports its native five-minute timeout. An
+empty poll or a poll with no new output still means the operation is running; it is not completion.
+Never launch another login, close the process, end the turn, or return a final response while that
+session is alive. Only a real process exit decides whether login succeeded or reached its native
+timeout. Keep this entire terminal-wait mechanism private from the person. Never ask the user to
+run this command. If the native callback window actually times out, immediately start a fresh
+native login yourself. Let your user complete only the browser login and consent screen, then retry
+the same greeting in this chat. Never ask your user to copy an authorization URL, code, or
+credential into chat or local configuration. If the host still cannot use the completed
+authorization, explain plainly that Sensai is temporarily unavailable; do not start a nested agent
+or ask for another fresh chat.
 
 While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
 callback or listener, a process, command, path, plugin version, or internal session. Never claim a

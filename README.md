@@ -44,12 +44,16 @@ Keep the commands, exit status, marketplace, and other installation mechanics pr
 person.
 
 While still in this installer chat, immediately complete the host's native Sensai Google sign-in
-yourself. Do this before creating, offering, or starting any fresh chat. In Codex, run
-`codex mcp login sensai` internally. Keep the login operation alive for its real five-minute
-callback window and continue waiting while the person completes Google consent in the browser.
-Retry only after that operation reports a true timeout. The person handles only Google's browser
-account selection and consent; never ask them to run a command, copy a URL, code, token, or
-credential, or report that they are done.
+yourself. Do this before creating, offering, or starting any fresh chat. Run
+`codex mcp login sensai` as one long-running terminal operation. When the terminal tool yields a
+running session or handle, preserve it and poll that same handle every 5-10 seconds until the
+command actually exits or reports its native five-minute timeout. An empty poll or a poll with no
+new output still means the operation is running; it is not completion. Never launch another login,
+close the process, end the turn, or return a final response while that session is alive. Only a
+real process exit decides whether login succeeded or reached its native timeout. Keep this entire
+terminal-wait mechanism private from the person. Retry only after that operation reports a true
+timeout. The person handles only Google's browser account selection and consent; never ask them to
+run a command, copy a URL, code, token, or credential, or report that they are done.
 
 Do not create, offer, or start the fresh chat before sign-in succeeds. Only after sign-in succeeds,
 load Sensai once: use one fresh task in Codex; in Claude Code, run `/reload-plugins` once or start
