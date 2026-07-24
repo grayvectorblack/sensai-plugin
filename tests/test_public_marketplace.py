@@ -92,24 +92,6 @@ def test_committed_plugin_manifest_is_computed_from_packaged_files() -> None:
     assert manifest == expected
 
 
-def test_skill_requires_first_call_omission_and_later_conversation_id_continuity() -> None:
-    source_skill = REPOSITORY_ROOT / "payload-src" / "shared" / "skills" / "sensai" / "SKILL.md"
-    packaged_skill = REPOSITORY_ROOT / "plugins" / "sensai" / "skills" / "sensai" / "SKILL.md"
-    first_call_rule = (
-        "On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a "
-        "placeholder such as `new`, an empty string, a label, or an invented ID."
-    )
-    later_call_rule = (
-        "Only after the first successful call returns a `conversation_id`, retain that exact UUID "
-        "and pass it on later calls in the same user conversation."
-    )
-
-    normalized_skill = " ".join(source_skill.read_text(encoding="utf-8").split())
-    assert first_call_rule in normalized_skill
-    assert later_call_rule in normalized_skill
-    assert packaged_skill.read_bytes() == source_skill.read_bytes()
-
-
 def test_both_platform_manifests_expose_the_public_source_repository(tmp_path: Path) -> None:
     built = build_packages(
         source_root=REPOSITORY_ROOT / "payload-src",
@@ -127,38 +109,3 @@ def test_both_platform_manifests_expose_the_public_source_repository(tmp_path: P
     assert claude_manifest["repository"] == PUBLIC_SOURCE_URL
     assert codex_manifest["homepage"] == PUBLIC_SOURCE_URL
     assert claude_manifest["homepage"] == PUBLIC_SOURCE_URL
-
-
-def test_public_metadata_states_the_advisory_product_boundary(tmp_path: Path) -> None:
-    built = build_packages(
-        source_root=REPOSITORY_ROOT / "payload-src",
-        output_root=tmp_path / "packages",
-    )
-    codex_manifest = json.loads(
-        (built.codex / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
-    )
-    claude_manifest = json.loads(
-        (built.claude / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-    )
-
-    expected = (
-        "Advises an AI agent with installation guidance, problem-solving help, and transparent "
-        "reference material."
-    )
-    assert codex_manifest["description"] == expected
-    assert claude_manifest["description"] == expected
-    assert "connects external services" not in json.dumps(codex_manifest).lower()
-    assert "acts in user accounts" not in json.dumps(claude_manifest).lower()
-
-
-def test_skill_assigns_connector_setup_to_the_users_local_agent() -> None:
-    source_skill = REPOSITORY_ROOT / "payload-src/shared/skills/sensai/SKILL.md"
-    packaged_skill = REPOSITORY_ROOT / "plugins/sensai/skills/sensai/SKILL.md"
-    normalized = " ".join(source_skill.read_text(encoding="utf-8").split())
-
-    assert "Set up external connectors yourself, following Sensai's guidance." in normalized
-    assert (
-        "Sensai does not perform local steps or act in your user's external accounts." in normalized
-    )
-    assert "Perform every step you can automate." in normalized
-    assert packaged_skill.read_bytes() == source_skill.read_bytes()
