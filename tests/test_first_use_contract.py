@@ -443,8 +443,15 @@ def test_magic_first_contact_phrase_is_absent_from_shipped_artifacts() -> None:
         assert third_person_instruction.lower() not in text.lower(), path
 
 
-def test_public_repository_contains_no_cyrillic_text() -> None:
+def test_cyrillic_content_is_limited_to_the_exact_prepared_start_prompt() -> None:
     ignored_parts = {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv"}
+    expected_paths = {
+        REPOSITORY_ROOT / "README.md",
+        REPOSITORY_ROOT / "docs/specs/FIRST-CONTACT-001.md",
+        Path(__file__),
+        REPOSITORY_ROOT / "tests/test_github_first_contract.py",
+    }
+    cyrillic_paths: set[Path] = set()
     for path in REPOSITORY_ROOT.rglob("*"):
         if not path.is_file() or any(part in ignored_parts for part in path.parts):
             continue
@@ -452,4 +459,8 @@ def test_public_repository_contains_no_cyrillic_text() -> None:
             content = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        assert not any("\u0400" <= character <= "\u04ff" for character in content), path
+        if any("\u0400" <= character <= "\u04ff" for character in content):
+            cyrillic_paths.add(path)
+            assert CODEX_NEW_CHAT_PROMPT in content, path
+
+    assert cyrillic_paths == expected_paths
