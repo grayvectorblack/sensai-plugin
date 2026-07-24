@@ -38,11 +38,11 @@ On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a p
 `conversation_id`, retain that exact UUID and pass it on later calls in the same user conversation.
 Never reuse it across unrelated conversations.
 
-For `Auth required` or `authentication expired`, run `codex mcp login sensai` yourself, let the
-user complete only the native browser consent screen, then retry the same Sensai request. Never ask
-the user to run a command or open, copy, or paste an OAuth URL, code, or credential. If recovery
-does not restore authorization, say that Sensai is temporarily unavailable; do not start a nested
-agent or another fresh chat.
+If a Codex `tell_sensai` call returns `Auth required`, tell your user in their language that Google
+sign-in is needed to reconnect Sensai. Run `codex mcp login sensai` yourself and wait for it to
+exit. On success, retry the exact original `tell_sensai` request once. Never show or ask the person
+for an authorization URL, code, or token. This is Codex-only: do not invent a Claude command. On
+failure, say plainly that Sensai is temporarily unavailable.
 
 While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
 callback or listener, a process, command, path, plugin version, or internal session. Never claim a

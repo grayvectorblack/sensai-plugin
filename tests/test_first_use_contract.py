@@ -128,8 +128,12 @@ def test_three_option_collapse_fixture_captures_the_live_regression() -> None:
 def test_users_agent_handles_native_oauth_without_manual_credential_copying() -> None:
     skill = _normalized_skill()
 
-    assert "let the user complete only the native browser consent screen" in skill
-    assert "Never ask the user to run a command or open, copy, or paste an OAuth URL" in skill
+    assert "Codex `tell_sensai` call returns `Auth required`" in skill
+    assert "Run `codex mcp login sensai` yourself and wait for it to exit." in skill
+    assert "On success, retry the exact original `tell_sensai` request once." in skill
+    assert "Never show or ask the person for an authorization URL, code, or token." in skill
+    assert "This is Codex-only: do not invent a Claude command." in skill
+    assert "On failure, say plainly that Sensai is temporarily unavailable." in skill
     assert (
         "While authorization is pending, speak to your user in ordinary language only."
     ) in skill
@@ -233,11 +237,32 @@ def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
         "loaded in its one fresh chat."
     )
     first_call = skill.index("After the plugin is loaded, immediately invoke the installed Sensai")
-    fallback = skill.index("For `Auth required` or `authentication expired`")
+    fallback = skill.index("If a Codex `tell_sensai` call returns `Auth required`")
 
     assert normal < first_call < fallback
     assert "Never start a nested Codex process to continue or call Sensai." in skill
     assert "Never create a second fresh-chat handoff for authorization." in skill
+
+
+def test_codex_auth_required_recovery_is_agent_only_and_does_not_leak_to_human_installation() -> None:
+    """An expired Codex bearer is recovered by the agent, not by a manual human procedure."""
+    skill = _normalized_skill()
+    readme = README.read_text(encoding="utf-8")
+    human_installation = readme.split("## After installation (if you are an AI agent)", 1)[0]
+
+    assert "Auth required" in skill
+    assert "codex mcp login sensai" in skill
+    assert "retry the exact original `tell_sensai` request once" in skill
+    assert "This recovery procedure is Codex-only" in skill
+    assert "equivalent Claude command" in skill
+    for technical_detail in (
+        "Auth required",
+        "codex mcp login sensai",
+        "authorization URL",
+        "OAuth code",
+        "access token",
+    ):
+        assert technical_detail not in human_installation
 
 
 def test_first_use_keeps_one_safe_handoff() -> None:
