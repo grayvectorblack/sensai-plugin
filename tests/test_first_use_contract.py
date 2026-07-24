@@ -256,11 +256,22 @@ def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
         "loaded in its one fresh chat."
     )
     first_call = skill.index("After the plugin is loaded, immediately invoke the installed Sensai")
-    fallback = skill.index("If authorization is unexpectedly absent")
+    fallback = skill.index("If Sensai reports `Auth required` or `authentication expired`")
 
     assert normal < first_call < fallback
     assert "Never start a nested Codex process to continue or call Sensai." in skill
     assert "Never create a second fresh-chat handoff for authorization." in skill
+
+
+def test_codex_recovery_runs_native_login_for_expired_auth_without_manual_url() -> None:
+    for path in (SOURCE_SKILL, PACKAGED_SKILL):
+        skill = " ".join(path.read_text(encoding="utf-8").split())
+
+        assert "If Sensai reports `Auth required` or `authentication expired`" in skill
+        assert "Run `codex mcp login sensai` as one long-running terminal operation." in skill
+        assert "Never ask the user to run this command." in skill
+        assert "Never ask your user to copy an authorization URL" in skill
+        assert "Do not open the authorization URL manually." not in skill
 
 
 def test_first_use_keeps_one_safe_handoff() -> None:

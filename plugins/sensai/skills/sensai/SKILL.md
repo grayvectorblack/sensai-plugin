@@ -38,8 +38,8 @@ On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a p
 `conversation_id`, retain that exact UUID and pass it on later calls in the same user conversation.
 Never reuse it across unrelated conversations.
 
-If authorization is unexpectedly absent, use your host's native MCP sign-in for the installed
-Sensai server as recovery. Before starting it, tell your user: "Google sign-in is needed to connect
+If Sensai reports `Auth required` or `authentication expired`, use your host's native MCP sign-in
+for the installed Sensai server as recovery. Before starting it, tell your user: "Google sign-in is needed to connect
 Sensai to this Codex session." Run `codex mcp login sensai` as one long-running terminal operation.
 When the terminal tool yields a running session or handle, preserve it and poll that same handle
 every 5-10 seconds until the command actually exits or reports its native five-minute timeout. An
