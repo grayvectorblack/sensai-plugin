@@ -253,8 +253,8 @@ def test_codex_auth_required_recovery_is_agent_only_and_does_not_leak_to_human_i
     assert "Auth required" in skill
     assert "codex mcp login sensai" in skill
     assert "retry the exact original `tell_sensai` request once" in skill
-    assert "This recovery procedure is Codex-only" in skill
-    assert "equivalent Claude command" in skill
+    assert "This is Codex-only" in skill
+    assert "do not invent a Claude command" in skill
     for technical_detail in (
         "Auth required",
         "codex mcp login sensai",
