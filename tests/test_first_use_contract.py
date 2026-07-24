@@ -31,16 +31,24 @@ def _normalized_spec() -> str:
     return " ".join(FIRST_CONTACT_SPEC.read_text(encoding="utf-8").split())
 
 
-def test_first_use_starts_with_a_natural_agent_to_agent_greeting() -> None:
+def test_first_use_starts_by_invoking_sensai() -> None:
     skill = _normalized_skill()
 
     assert "Sensai is another AI agent. You are the user's AI agent" in skill
-    assert (
-        "After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting"
-        in skill
-    )
-    assert "asks Sensai to introduce itself and explain what it needs next" in skill
+    assert "After the plugin is loaded, invoke `tell_sensai` immediately to start Sensai." in skill
+    assert "Let Sensai introduce itself and explain what it needs next." in skill
     assert "Authorization should already be present." in skill
+
+
+def test_new_chat_handoff_explicitly_invokes_sensai_instead_of_only_greeting() -> None:
+    """The fresh chat must direct the host agent to invoke Sensai, not greet its human."""
+    readme = _normalized_readme()
+    skill = _normalized_skill()
+
+    assert "localized equivalent of `Start Sensai.`" in readme
+    assert "brief natural greeting" not in readme
+    assert "invoke `tell_sensai` immediately to start Sensai" in skill
+    assert "brief, natural greeting" not in skill
 
 
 def test_first_tell_sensai_call_omits_conversation_id_entirely() -> None:
@@ -128,7 +136,7 @@ def test_users_agent_handles_native_oauth_without_manual_credential_copying() ->
     assert "If the native callback window actually times out" in skill
     assert "immediately start a fresh native login yourself" in skill
     assert "complete only the browser login and consent screen" in skill
-    assert "then retry the same greeting" in skill
+    assert "then retry the same Sensai invocation" in skill
     assert (
         "Never ask your user to copy an authorization URL, code, or credential into chat or local "
         "configuration."
@@ -172,9 +180,9 @@ def test_normal_install_orders_authorization_before_the_codex_new_chat_link() ->
     assert (
         "Its visible label and its prepared prompt must be in the person's language too." in readme
     )
-    assert "followed only by a brief natural greeting" in readme
+    assert "localized equivalent of `Start Sensai.`" in readme
     assert "Do not tell Sensai which questions to ask." in readme
-    assert "localized short greeting" in readme
+    assert "must invoke Sensai immediately" in readme
     assert "Make `new chat` a `codex://new?prompt=...` link." in readme
     assert "The link only fills the new-chat composer; it does not send the message." in readme
     assert (
@@ -223,7 +231,7 @@ def test_first_contact_spec_enforces_the_same_codex_new_chat_order() -> None:
     last_install = max(codex_install, claude_install)
     authorize = spec.index("It then completes Sensai's native Google sign-in", last_install)
     fresh_context = spec.index("After sign-in succeeds, Codex tells the person", authorize)
-    first_call = spec.index("greets Sensai immediately", fresh_context)
+    first_call = spec.index("invokes Sensai immediately", fresh_context)
 
     assert codex_marketplace < codex_install < authorize
     assert claude_marketplace < claude_install < authorize
@@ -241,7 +249,7 @@ def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
         "The normal installation flow completes native Sensai Google sign-in before this skill is "
         "loaded in its one fresh chat."
     )
-    first_call = skill.index("After the plugin is loaded, call `tell_sensai` immediately")
+    first_call = skill.index("After the plugin is loaded, invoke `tell_sensai` immediately")
     fallback = skill.index("If authorization is unexpectedly absent")
 
     assert normal < first_call < fallback
@@ -322,9 +330,9 @@ def test_skill_requires_human_confirmation_before_role_or_program_relay() -> Non
     assert "Never infer it from workspace, project, files, installed tools, account labels" in skill
     assert '7-10 clearly labelled example roles plus "other"' in skill
     assert "Relay only what the user explicitly confirms." in skill
-    assert skill.index("After the plugin is loaded, call `tell_sensai` immediately") < skill.index(
-        "Before relaying any role or program list to Sensai, ask your user directly."
-    )
+    assert skill.index(
+        "After the plugin is loaded, invoke `tell_sensai` immediately"
+    ) < skill.index("Before relaying any role or program list to Sensai, ask your user directly.")
 
 
 @pytest.mark.parametrize(
@@ -372,7 +380,7 @@ def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
     assert (
         "Its visible label and its prepared prompt must be in the person's language too." in readme
     )
-    assert "followed only by a brief natural greeting" in readme
+    assert "localized equivalent of `Start Sensai.`" in readme
     assert "Do not tell Sensai which questions to ask." in readme
     assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
     assert (

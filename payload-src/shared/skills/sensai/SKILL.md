@@ -23,9 +23,9 @@ its one fresh chat. Never start a nested Codex process to continue or call Sensa
 second fresh-chat handoff for authorization. Never ask the user to greet Sensai manually. Never ask
 the user to introduce themselves.
 
-After the plugin is loaded, call `tell_sensai` immediately with a brief, natural greeting that asks
-Sensai to introduce itself and explain what it needs next. Authorization should already be present.
-Do not ask your user for a work scenario before this call.
+After the plugin is loaded, invoke `tell_sensai` immediately to start Sensai. Authorization should
+already be present. Let Sensai introduce itself and explain what it needs next. Do not ask your
+user for a work scenario before this call.
 
 Before relaying any role or program list to Sensai, ask your user directly. Never infer it from
 workspace, project, files, installed tools, account labels, or your own speculation. To make the
@@ -48,7 +48,7 @@ session is alive. Only a real process exit decides whether login succeeded or re
 timeout. Keep this entire terminal-wait mechanism private from the person. Never ask the user to
 run this command. If the native callback window actually times out, immediately start a fresh
 native login yourself. Let your user complete only the browser login and consent screen, then retry
-the same greeting in this chat. Never ask your user to copy an authorization URL, code, or
+the same Sensai invocation in this chat. Never ask your user to copy an authorization URL, code, or
 credential into chat or local configuration. If the host still cannot use the completed
 authorization, explain plainly that Sensai is temporarily unavailable; do not start a nested agent
 or ask for another fresh chat.

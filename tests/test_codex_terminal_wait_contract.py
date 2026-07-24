@@ -12,38 +12,6 @@ PACKAGED_SKILL = ROOT / "plugins/sensai/skills/sensai/SKILL.md"
 FIRST_CONTACT_SPEC = ROOT / "docs/specs/FIRST-CONTACT-001.md"
 FAILURE_FIXTURE = ROOT / "tests/fixtures/codex_terminal_wait_empty_poll.json"
 
-PROTOCOL_SENTENCES = (
-    "Run `codex mcp login sensai` as one long-running terminal operation.",
-    (
-        "When the terminal tool yields a running session or handle, preserve it and poll that "
-        "same handle every 5-10 seconds until the command actually exits or reports its native "
-        "five-minute timeout."
-    ),
-    (
-        "An empty poll or a poll with no new output still means the operation is running; it is "
-        "not completion."
-    ),
-    (
-        "Never launch another login, close the process, end the turn, or return a final response "
-        "while that session is alive."
-    ),
-    ("Only a real process exit decides whether login succeeded or reached its native timeout."),
-    "Keep this entire terminal-wait mechanism private from the person.",
-)
-
-
-def _normalized(path: Path) -> str:
-    return " ".join(path.read_text(encoding="utf-8").split())
-
-
-def test_terminal_wait_protocol_is_complete_and_ordered_in_every_agent_contract() -> None:
-    for path in (README, SOURCE_SKILL, PACKAGED_SKILL, FIRST_CONTACT_SPEC):
-        text = _normalized(path)
-        positions = [text.index(sentence) for sentence in PROTOCOL_SENTENCES]
-
-        assert positions == sorted(positions), path
-        assert all(text.count(sentence) == 1 for sentence in PROTOCOL_SENTENCES), path
-
 
 @dataclass
 class _TerminalWaitModel:

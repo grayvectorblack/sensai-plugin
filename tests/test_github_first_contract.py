@@ -30,7 +30,7 @@ def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff
     assert "The link only fills the new-chat composer; it does not send the message." in normalized
     assert "Continue with Sensai and contact Sensai automatically." not in readme
     assert (
-        "That loaded context must contact Sensai immediately with authorization already present."
+        "That loaded context must invoke Sensai immediately with authorization already present"
         in normalized
     )
     assert "Install Sensai only through the host's native plugin installation system." in normalized
@@ -93,7 +93,7 @@ def test_public_readme_has_the_short_install_prompt_and_documented_codex_handoff
         "Its visible label and its prepared prompt must be in the person's language too."
         in normalized
     )
-    assert "followed only by a brief natural greeting" in normalized
+    assert "localized equivalent of `Start Sensai.`" in normalized
 
 
 def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
@@ -103,7 +103,7 @@ def test_first_contact_spec_matches_the_public_codex_handoff() -> None:
     assert "> Install Sensai https://github.com/grayvectorblack/sensai-plugin" in spec
     assert "offers a clickable `new chat` link in that language" in normalized
     assert "decoded prompt is also in the person's language" in normalized
-    assert "contains only a brief natural greeting" in normalized
+    assert "localized equivalent of `Start Sensai.`" in normalized
     assert "Sensai decides its own first question." in normalized
     assert "It only fills Codex's composer; the person presses Enter to send it." in normalized
     assert "Continue with Sensai and contact Sensai automatically." not in spec

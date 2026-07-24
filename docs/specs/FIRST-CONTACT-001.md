@@ -51,11 +51,11 @@ waits for success. A timeout is real only when the host's login operation report
 After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
 installed and offers a clickable `new chat` link in that language. The link is a documented
 `codex://new?prompt=...` URL whose decoded prompt is also in the person's language, starts with
-`[@Sensai](plugin://sensai@sensai)`, and contains only a brief natural greeting in the person's
-language. Sensai decides its own first question. It only fills Codex's composer; the person presses
+`[@Sensai](plugin://sensai@sensai)`, with the localized equivalent of `Start Sensai.`. Sensai
+decides its own first question. It only fills Codex's composer; the person presses
 Enter to send it. Claude Code reloads plugins once in the current
 session, or starts one new session when reload is unavailable; it never does both. The loaded
-context starts with authorization already present and greets Sensai immediately. A second nested
+context starts with authorization already present and invokes Sensai immediately. A second nested
 Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The
 agent never asks the person to introduce themselves or greet Sensai manually.
 
@@ -91,6 +91,6 @@ person. If that window actually expires, the agent starts a fresh native login i
 asking the person to run a command. The person completes only the browser login and consent.
 
 If credentials are unexpectedly absent in the fresh chat, the loaded Sensai skill retains the same
-native sign-in recovery. Recovery retries the greeting in the current chat and never starts a
+native sign-in recovery. Recovery retries the Sensai invocation in the current chat and never starts a
 nested agent or requests another fresh-chat handoff. If OAuth remains unavailable, first contact
 fails clearly instead of requesting a copied credential.
