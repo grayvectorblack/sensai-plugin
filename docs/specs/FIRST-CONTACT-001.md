@@ -1,24 +1,20 @@
-# FIRST-CONTACT-001: One-request Sensai installation
+# FIRST-CONTACT-001: Native Sensai installation and first consultation
 
-## User journey
+## Purpose
 
-The supported journey starts with exactly one natural request:
+Sensai is installed through the host's native plugin mechanism. The user's AI agent performs normal
+local setup. The person participates only where their account, consent, secret, payment, or an
+external side effect requires them.
 
-> Install Sensai https://github.com/grayvectorblack/sensai-plugin
+The agent must make the flow understandable without turning it into a technical support script:
+before authorization or an external action, it briefly explains what will happen and why. It gives
+technical details when asked. It never asks the person to copy a password, authorization code, or
+token into the chat.
 
-The request directs the installing agent to the transparent public README instead of choosing an
-installer in advance. The agent then detects Codex versus Claude Code and completes these steps in
-strict order: native plugin installation, native Google sign-in in the installer chat, exactly one
-fresh task, session, or reload boundary, and the first `tell_sensai` call.
+## Native installation
 
-A brief ordinary-language acknowledgement is allowed while installation is in progress. It must
-not expose commands, paths, versions, a plugin manager, MCP, transport, or other installation
-mechanics.
-
-## Deterministic native installation
-
-The installing agent runs the exact command pair for its current host. It does not infer support
-from a UI, prose, or memory.
+The public README is the human-facing starting point. The installing agent uses the native commands
+for its current host, not a generic skill installer or copied repository files.
 
 Codex:
 
@@ -34,64 +30,40 @@ claude plugin marketplace add grayvectorblack/sensai-plugin
 claude plugin install sensai@sensai --scope user
 ```
 
-A skill installer and manual file copying are forbidden. The agent may report that native
-installation is unsupported only after an applicable installation command actually returns a
-nonzero result. Commands, command results, marketplace mechanics, and plugin mechanics remain
-private from the person.
+If an applicable native command fails, the agent reports that Sensai could not be installed. It
+does not substitute an unofficial installation path.
 
-## Platform boundary
+## Authorization and first request
 
-Codex loads a newly installed plugin in a fresh task. Before creating or offering that task, the
-installing agent tells the person in the person's language that Google sign-in is needed to connect
-Sensai to this Codex session. It then completes Sensai's native Google sign-in while the installer chat is still active.
-It runs `codex mcp login sensai` once and never opens the authorization URL manually. It keeps the
-real login operation alive, lets the person handle only Google's browser consent, and
-waits for success. A timeout is real only when the host's login operation reports it.
+Before starting the host's authorization flow, the agent tells the person in their language that
+Sensai is being connected to this session and why. The person selects an account and approves the
+provider's consent screen; the agent handles the remaining host-native steps.
 
-After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
-installed and offers a clickable `new chat` link in that language. The link is a documented
-`codex://new?prompt=...` URL whose decoded prompt is exactly
-`Запусти [@Sensai](plugin://sensai@sensai).` It only fills Codex's composer; the person presses
-Enter to send it. Sensai handles its introduction and onboarding after invocation. Claude Code reloads plugins once in the current
-session, or starts one new session when reload is unavailable; it never does both. The loaded
-context starts with authorization already present and invokes Sensai immediately. A second nested
-Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The
-agent never asks the person to introduce themselves or greet Sensai manually.
+For Codex, the agent runs `codex mcp login sensai` and waits for the command's actual completion.
+It does not open, copy, or request an authorization URL, code, or token manually. Claude uses only
+its documented native mechanism; this specification does not invent an equivalent command.
 
-The documented Codex template is an exact direct invocation through the installed Sensai plugin URI.
+After the plugin is loaded, the agent starts a consultation with `tell_sensai`. Its first request
+omits `conversation_id`. Once Sensai returns a conversation ID, the agent uses that exact value for
+later requests in the same conversation. An `Auth required` result in Codex is recovered by one
+native login attempt followed by one retry of the original request. The agent states the outcome
+honestly and never claims browser navigation or access that the host did not confirm.
 
-The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, `new`, a label,
-or another invented identifier. After the first successful response, the agent retains the exact
-returned UUID and uses it for later turns in that user conversation.
+## Discovery and recommendations
 
-The platforms may still require the person to approve plugin installation and, once server OAuth is
-available, authorize Sensai in a browser. Those are platform security boundaries, not additional
-Sensai setup commands.
+Sensai first needs confirmed information about the person's role, common programs or sites, and
+recurring tasks. The user's agent asks the person for those facts; it must not infer them from a
+workspace, account label, installed software, or its own speculation.
 
-The user's agent performs every other automatable step. It may communicate with Sensai in concise
-English, while communicating with the person in the person's language. Sensai addresses the user's
-agent, not the person directly.
+Sensai may ask a necessary follow-up, recommend an available connector, or compose a useful
+scenario from the confirmed information. The number of options is its judgment, not a protocol
+rule. The user's agent relays every distinct option Sensai actually offers, including any
+recommendation, before asking the person to choose. It does not silently discard options or decide
+for the person.
 
-When Sensai returns the three onboarding scenarios and its recommendation, the user's agent relays
-all three distinct options and the recommendation before asking the person to choose. It preserves
-the person's language and concise meaning, does not reduce the response to the recommended option,
-and never chooses for the person.
+## Boundaries
 
-## Authorization boundary
-
-The plugin contains no credential. Its MCP client contacts the configured HTTPS endpoint and uses
-the server's standard OAuth metadata. The installing agent starts its host's native MCP sign-in
-after native plugin installation and before the fresh chat. Run `codex mcp login sensai` as one
-long-running terminal operation. When the terminal tool yields a running session or handle,
-preserve it and poll that same handle every 5-10 seconds until the command actually exits or reports
-its native five-minute timeout. An empty poll or a poll with no new output still means the operation
-is running; it is not completion. Never launch another login, close the process, end the turn, or
-return a final response while that session is alive. Only a real process exit decides whether login
-succeeded or reached its native timeout. Keep this entire terminal-wait mechanism private from the
-person. If that window actually expires, the agent starts a fresh native login itself instead of
-asking the person to run a command. The person completes only the browser login and consent.
-
-If credentials are unexpectedly absent in the fresh chat, the loaded Sensai skill retains the same
-native sign-in recovery. Recovery retries the greeting in the current chat and never starts a
-nested agent or requests another fresh-chat handoff. If OAuth remains unavailable, first contact
-fails clearly instead of requesting a copied credential.
+Sensai provides guidance. The user's agent performs local work through normal host tools and only
+reports results that it or the person has confirmed. It communicates with Sensai in concise English
+when useful and communicates with the person in the person's language. It does not send secrets,
+tokens, internal IDs, environment variables, or irrelevant transport details to Sensai.
