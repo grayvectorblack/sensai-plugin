@@ -19,6 +19,7 @@ CODEX_MARKETPLACE_COMMAND = "codex plugin marketplace add grayvectorblack/sensai
 CODEX_INSTALL_COMMAND = "codex plugin add sensai@sensai"
 CLAUDE_MARKETPLACE_COMMAND = "claude plugin marketplace add grayvectorblack/sensai-plugin"
 CLAUDE_INSTALL_COMMAND = "claude plugin install sensai@sensai --scope user"
+CODEX_NEW_CHAT_PROMPT = "Запусти [@Sensai](plugin://sensai@sensai)."
 
 
 def _normalized_skill() -> str:
@@ -55,9 +56,12 @@ def test_codex_new_chat_link_invokes_the_installed_sensai_plugin() -> None:
     prompt_values = parse_qs(parsed.query).get("prompt")
     assert prompt_values is not None and len(prompt_values) == 1
 
-    prompt = unquote(prompt_values[0])
-    assert "plugin://sensai@sensai" in prompt
-    assert re.search(r"\b(?:start|run|invoke|launch)\b", prompt, flags=re.IGNORECASE)
+    assert unquote(prompt_values[0]) == CODEX_NEW_CHAT_PROMPT
+    assert (
+        "```text\n"
+        "Запусти [@Sensai](plugin://sensai@sensai).\n"
+        "```"
+    ) in raw_readme
 
 
 def test_first_tell_sensai_call_omits_conversation_id_entirely() -> None:
@@ -124,32 +128,8 @@ def test_three_option_collapse_fixture_captures_the_live_regression() -> None:
 def test_users_agent_handles_native_oauth_without_manual_credential_copying() -> None:
     skill = _normalized_skill()
 
-    assert "use your host's native MCP sign-in for the installed Sensai server" in skill
-    assert "Run `codex mcp login sensai` as one long-running terminal operation." in skill
-    assert "Never ask the user to run this command." in skill
-    assert (
-        "When the terminal tool yields a running session or handle, preserve it and poll that same "
-        "handle every 5-10 seconds until the command actually exits or reports its native "
-        "five-minute timeout."
-    ) in skill
-    assert (
-        "An empty poll or a poll with no new output still means the operation is running; it is "
-        "not completion."
-    ) in skill
-    assert (
-        "Never launch another login, close the process, end the turn, or return a final response "
-        "while that session is alive."
-    ) in skill
-    assert "Only a real process exit decides whether login succeeded" in skill
-    assert "Keep this entire terminal-wait mechanism private from the person." in skill
-    assert "If the native callback window actually times out" in skill
-    assert "immediately start a fresh native login yourself" in skill
-    assert "complete only the browser login and consent screen" in skill
-    assert "then retry the same greeting" in skill
-    assert (
-        "Never ask your user to copy an authorization URL, code, or credential into chat or local "
-        "configuration."
-    ) in skill
+    assert "let the user complete only the native browser consent screen" in skill
+    assert "Never ask the user to run a command or open, copy, or paste an OAuth URL" in skill
     assert (
         "While authorization is pending, speak to your user in ordinary language only."
     ) in skill
@@ -185,9 +165,6 @@ def test_normal_install_orders_authorization_before_the_codex_new_chat_link() ->
     assert "tell the person in the person's language the equivalent of:" in readme
     assert (
         "The Sensai plugin is installed. To start using it, open a [new chat]. Then press" in readme
-    )
-    assert (
-        "Its visible label and its prepared prompt must be in the person's language too." in readme
     )
     assert "Make `new chat` a `codex://new?prompt=...` link." in readme
     assert "The link only fills the new-chat composer; it does not send the message." in readme
@@ -245,7 +222,7 @@ def test_first_contact_spec_enforces_the_same_codex_new_chat_order() -> None:
     assert "A second nested Codex launch is forbidden." in spec
     assert "A second fresh-context handoff is forbidden in the normal path." in spec
     assert "only after an applicable installation command actually returns a nonzero result" in spec
-    assert "decoded prompt is also in the person's language" in spec
+    assert "decoded prompt is exactly `Запусти [@Sensai](plugin://sensai@sensai).`" in spec
     assert "It only fills Codex's composer; the person presses Enter to send it." in spec
 
 
@@ -256,22 +233,11 @@ def test_loaded_skill_expects_pre_authorization_but_keeps_recovery() -> None:
         "loaded in its one fresh chat."
     )
     first_call = skill.index("After the plugin is loaded, immediately invoke the installed Sensai")
-    fallback = skill.index("If Sensai reports `Auth required` or `authentication expired`")
+    fallback = skill.index("For `Auth required` or `authentication expired`")
 
     assert normal < first_call < fallback
     assert "Never start a nested Codex process to continue or call Sensai." in skill
     assert "Never create a second fresh-chat handoff for authorization." in skill
-
-
-def test_codex_recovery_runs_native_login_for_expired_auth_without_manual_url() -> None:
-    for path in (SOURCE_SKILL, PACKAGED_SKILL):
-        skill = " ".join(path.read_text(encoding="utf-8").split())
-
-        assert "If Sensai reports `Auth required` or `authentication expired`" in skill
-        assert "Run `codex mcp login sensai` as one long-running terminal operation." in skill
-        assert "Never ask the user to run this command." in skill
-        assert "Never ask your user to copy an authorization URL" in skill
-        assert "Do not open the authorization URL manually." not in skill
 
 
 def test_first_use_keeps_one_safe_handoff() -> None:
@@ -396,9 +362,7 @@ def test_readme_has_a_short_human_entry_point_and_clear_codex_handoff() -> None:
     assert "tell the person in the person's language that Google sign-in is" in readme
     assert "tell the person in the person's language the equivalent of:" in readme
     assert "Then press Enter to send the prepared" in readme
-    assert (
-        "Its visible label and its prepared prompt must be in the person's language too." in readme
-    )
+    assert "Sensai handles its introduction and onboarding after invocation." in readme
     assert "Continue with Sensai and contact Sensai automatically." not in raw_readme
     assert (
         readme.index("tell the person in the person's language that Google sign-in is")

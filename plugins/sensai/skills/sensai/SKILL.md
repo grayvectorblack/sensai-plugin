@@ -38,21 +38,11 @@ On the first `tell_sensai` call, omit `conversation_id` entirely. Never send a p
 `conversation_id`, retain that exact UUID and pass it on later calls in the same user conversation.
 Never reuse it across unrelated conversations.
 
-If Sensai reports `Auth required` or `authentication expired`, use your host's native MCP sign-in
-for the installed Sensai server as recovery. Before starting it, tell your user: "Google sign-in is needed to connect
-Sensai to this Codex session." Run `codex mcp login sensai` as one long-running terminal operation.
-When the terminal tool yields a running session or handle, preserve it and poll that same handle
-every 5-10 seconds until the command actually exits or reports its native five-minute timeout. An
-empty poll or a poll with no new output still means the operation is running; it is not completion.
-Never launch another login, close the process, end the turn, or return a final response while that
-session is alive. Only a real process exit decides whether login succeeded or reached its native
-timeout. Keep this entire terminal-wait mechanism private from the person. Never ask the user to
-run this command. If the native callback window actually times out, immediately start a fresh
-native login yourself. Let your user complete only the browser login and consent screen, then retry
-the same greeting in this chat. Never ask your user to copy an authorization URL, code, or
-credential into chat or local configuration. If the host still cannot use the completed
-authorization, explain plainly that Sensai is temporarily unavailable; do not start a nested agent
-or ask for another fresh chat.
+For `Auth required` or `authentication expired`, run `codex mcp login sensai` yourself, let the
+user complete only the native browser consent screen, then retry the same Sensai request. Never ask
+the user to run a command or open, copy, or paste an OAuth URL, code, or credential. If recovery
+does not restore authorization, say that Sensai is temporarily unavailable; do not start a nested
+agent or another fresh chat.
 
 While authorization is pending, speak to your user in ordinary language only. Never mention MCP, a
 callback or listener, a process, command, path, plugin version, or internal session. Never claim a

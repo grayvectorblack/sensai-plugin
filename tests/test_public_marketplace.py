@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -77,6 +78,18 @@ def test_public_repository_is_a_ready_codex_marketplace(tmp_path: Path) -> None:
         "MANIFEST.sha256",
         "skills/sensai/SKILL.md",
     }
+
+
+def test_committed_plugin_manifest_is_computed_from_packaged_files() -> None:
+    committed = REPOSITORY_ROOT / "plugins" / "sensai"
+    files = _regular_files(committed)
+    manifest = files.pop("MANIFEST.sha256")
+    expected = b"".join(
+        f"{hashlib.sha256(content).hexdigest()}  {relative}\n".encode()
+        for relative, content in sorted(files.items())
+    )
+
+    assert manifest == expected
 
 
 def test_skill_requires_first_call_omission_and_later_conversation_id_continuity() -> None:

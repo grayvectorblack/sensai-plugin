@@ -61,17 +61,18 @@ run a command, copy a URL, code, token, or credential, or report that they are d
 Do not create or offer a fresh chat before sign-in succeeds. Only after sign-in succeeds, load
 Sensai once. In Codex, tell the person in the person's language the equivalent of: "The Sensai
 plugin is installed. To start using it, open a [new chat]. Then press Enter to send the prepared
-message." Make `new chat` a `codex://new?prompt=...` link. Its visible label and its prepared
-prompt must be in the person's language too. The prepared new-chat prompt must explicitly instruct
-the user's agent to start the installed Sensai plugin, rather than greeting the human. It must
-address Sensai through `[@Sensai](plugin://sensai@sensai)`, ask Sensai to introduce itself briefly,
-and ask the human
-about their work, up to five common programs or sites, and recurring tasks. The link only fills
-the new-chat composer; it does not send the message. In Claude Code, run `/reload-plugins` once or start one new session when
+message." Make `new chat` a `codex://new?prompt=...` link. The link only fills the new-chat
+composer; it does not send the message. In Claude Code, run `/reload-plugins` once or start one new session when
 reload is unavailable, never both. The normal installation path has exactly one fresh-context
 boundary and never starts a nested Codex process.
 
-For Codex, the [Sensai start prompt](codex://new?prompt=%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29%20Invoke%20the%20installed%20Sensai%20plugin%20now.) is the concrete template: localize its visible label and prompt before presenting the link to the person, while preserving its direct invocation of the installed plugin.
+For Codex, give the agent this exact new-chat template:
+
+```text
+Запусти [@Sensai](plugin://sensai@sensai).
+```
+
+Use the [Sensai start prompt](codex://new?prompt=%D0%97%D0%B0%D0%BF%D1%83%D1%81%D1%82%D0%B8%20%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29.) link for that template. Sensai handles its introduction and onboarding after invocation.
 
 That loaded context must invoke Sensai immediately with authorization already present. Send the
 localized prepared invocation without waiting for another human command.

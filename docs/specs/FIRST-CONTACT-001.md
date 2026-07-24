@@ -50,19 +50,15 @@ waits for success. A timeout is real only when the host's login operation report
 
 After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
 installed and offers a clickable `new chat` link in that language. The link is a documented
-`codex://new?prompt=...` URL whose decoded prompt is also in the person's language. The prepared
-new-chat prompt must explicitly instruct the user's agent to start the installed Sensai plugin,
-rather than greeting the human. It starts with `[@Sensai](plugin://sensai@sensai)`, and asks Sensai
-to introduce itself briefly before asking the
-human about their work, up to five common programs or sites, and recurring tasks. It only fills Codex's
-composer; the person presses Enter to send it. Claude Code reloads plugins once in the current
+`codex://new?prompt=...` URL whose decoded prompt is exactly
+`Запусти [@Sensai](plugin://sensai@sensai).` It only fills Codex's composer; the person presses
+Enter to send it. Sensai handles its introduction and onboarding after invocation. Claude Code reloads plugins once in the current
 session, or starts one new session when reload is unavailable; it never does both. The loaded
 context starts with authorization already present and invokes Sensai immediately. A second nested
 Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The
 agent never asks the person to introduce themselves or greet Sensai manually.
 
-The documented Codex template decodes to a direct invocation through the installed Sensai plugin
-URI. Localized variants preserve that invocation rather than replacing it with a greeting.
+The documented Codex template is an exact direct invocation through the installed Sensai plugin URI.
 
 The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, `new`, a label,
 or another invented identifier. After the first successful response, the agent retains the exact
