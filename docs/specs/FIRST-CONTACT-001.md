@@ -50,14 +50,19 @@ waits for success. A timeout is real only when the host's login operation report
 
 After sign-in succeeds, Codex tells the person in the person's language that the Sensai plugin is
 installed and offers a clickable `new chat` link in that language. The link is a documented
-`codex://new?prompt=...` URL whose decoded prompt is also in the person's language, starts with
-`[@Sensai](plugin://sensai@sensai)`, with the localized equivalent of `Start Sensai.`. Sensai
-decides its own first question. It only fills Codex's composer; the person presses
-Enter to send it. Claude Code reloads plugins once in the current
+`codex://new?prompt=...` URL whose decoded prompt is also in the person's language. The prepared
+new-chat prompt must explicitly instruct the user's agent to start the installed Sensai plugin,
+rather than greeting the human. It starts with `[@Sensai](plugin://sensai@sensai)`, and asks Sensai
+to introduce itself briefly before asking the
+human about their work, up to five common programs or sites, and recurring tasks. It only fills Codex's
+composer; the person presses Enter to send it. Claude Code reloads plugins once in the current
 session, or starts one new session when reload is unavailable; it never does both. The loaded
 context starts with authorization already present and invokes Sensai immediately. A second nested
 Codex launch is forbidden. A second fresh-context handoff is forbidden in the normal path. The
 agent never asks the person to introduce themselves or greet Sensai manually.
+
+The documented Codex template decodes to a direct invocation through the installed Sensai plugin
+URI. Localized variants preserve that invocation rather than replacing it with a greeting.
 
 The first `tell_sensai` call omits `conversation_id`. It never sends an empty value, `new`, a label,
 or another invented identifier. After the first successful response, the agent retains the exact
@@ -91,6 +96,6 @@ person. If that window actually expires, the agent starts a fresh native login i
 asking the person to run a command. The person completes only the browser login and consent.
 
 If credentials are unexpectedly absent in the fresh chat, the loaded Sensai skill retains the same
-native sign-in recovery. Recovery retries the Sensai invocation in the current chat and never starts a
+native sign-in recovery. Recovery retries the greeting in the current chat and never starts a
 nested agent or requests another fresh-chat handoff. If OAuth remains unavailable, first contact
 fails clearly instead of requesting a copied credential.

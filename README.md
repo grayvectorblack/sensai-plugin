@@ -62,15 +62,19 @@ Do not create or offer a fresh chat before sign-in succeeds. Only after sign-in 
 Sensai once. In Codex, tell the person in the person's language the equivalent of: "The Sensai
 plugin is installed. To start using it, open a [new chat]. Then press Enter to send the prepared
 message." Make `new chat` a `codex://new?prompt=...` link. Its visible label and its prepared
-prompt must be in the person's language too. The prepared prompt must address Sensai through
-`[@Sensai](plugin://sensai@sensai)` with the localized equivalent of `Start Sensai.` Do not tell
-Sensai which questions to ask. The link only fills
+prompt must be in the person's language too. The prepared new-chat prompt must explicitly instruct
+the user's agent to start the installed Sensai plugin, rather than greeting the human. It must
+address Sensai through `[@Sensai](plugin://sensai@sensai)`, ask Sensai to introduce itself briefly,
+and ask the human
+about their work, up to five common programs or sites, and recurring tasks. The link only fills
 the new-chat composer; it does not send the message. In Claude Code, run `/reload-plugins` once or start one new session when
 reload is unavailable, never both. The normal installation path has exactly one fresh-context
 boundary and never starts a nested Codex process.
 
-That loaded context must invoke Sensai immediately with authorization already present, without
-waiting for another human command.
+For Codex, the [Sensai start prompt](codex://new?prompt=%5B%40Sensai%5D%28plugin%3A%2F%2Fsensai%40sensai%29%20Invoke%20the%20installed%20Sensai%20plugin%20now.) is the concrete template: localize its visible label and prompt before presenting the link to the person, while preserving its direct invocation of the installed plugin.
+
+That loaded context must invoke Sensai immediately with authorization already present. Send the
+localized prepared invocation without waiting for another human command.
 
 Never ask the person to greet Sensai manually. Do not include MCP, commands, paths, a plugin
 version, or transport details in that sentence or in a status update.
